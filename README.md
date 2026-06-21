@@ -5,17 +5,30 @@
 <h1 align="center">research-paper-lifecycle-skills</h1>
 
 <p align="center">
-  <b>Agent skills that take a research paper from idea to camera-ready:
-  search, write, verify, submit, rebut, publish, and present with less
-  deadline panic.</b>
+  <b>Agent skills for the whole research-paper lifecycle: discover, write,
+  verify, submit, rebut, publish, and present with rules checked from live
+  sources.</b><br>
+  Field-agnostic, citation-aware, and designed as a copilot: you stay the
+  author, the agent does the careful checking.
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"></a>
   <a href="#find-the-skill-you-need"><img src="https://img.shields.io/badge/skills-41-blue.svg" alt="41 skills"></a>
-  <a href="#principles"><img src="https://img.shields.io/badge/paper_content-never_bundled-success.svg" alt="no paper content bundled"></a>
-  <a href="#how-it-works"><img src="https://img.shields.io/badge/venue_rules-verified_live-orange.svg" alt="venue rules verified live"></a>
+  <a href="#what-it-wont-do"><img src="https://img.shields.io/badge/paper_content-never_bundled-success.svg" alt="no paper content bundled"></a>
+  <a href="#how-it-works"><img src="https://img.shields.io/badge/venue_rules-built_live-orange.svg" alt="venue rules built live"></a>
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/standard-agentskills.io-black.svg" alt="agentskills.io"></a>
+</p>
+
+<p align="center">
+  <sub>
+    <a href="#quick-start-60-seconds">Quick start</a> ·
+    <a href="#how-it-works">How it works</a> ·
+    <a href="#find-the-skill-you-need">All 41 skills</a> ·
+    <a href="#common-workflows">Workflows</a> ·
+    <a href="#integrations">Integrations</a> ·
+    <a href="#what-it-wont-do">Boundaries</a>
+  </sub>
 </p>
 
 ---
@@ -24,22 +37,21 @@
 
 Most AI writing tools stop at the draft. Papers get rejected after that: a page
 over the limit, an author name left in a double-blind PDF, a missing checklist,
-a hallucinated citation, a broken artifact, or a rushed camera-ready form.
+a hallucinated citation, a broken artifact, or a camera-ready step nobody had
+time to read.
 
 `research-paper-lifecycle-skills` gives compatible agents a structured
-playbook for the whole back half of research publishing. It builds venue rules
-from live CFPs or author instructions instead of guessing, so the agent can
-catch desk-reject risks before a reviewer ever sees the paper.
+playbook for the research work around the paper. It can search and verify
+sources, tighten writing without changing claims, check venue rules against
+live CFPs or author instructions, triage reviews, prepare artifacts, and turn a
+finished paper into slides, scripts, Q&A practice, or a poster.
 
-**Who it is for:** researchers, PhD students, labs, and builders supporting
-research workflows across disciplines. The skills are field-agnostic and built
-around universal publishing work: finding sources, verifying citations, meeting
-venue rules, responding to reviews, preparing artifacts, and presenting results.
+**Who it is for:** researchers, PhD students, labs, reviewers, and builders
+supporting publication workflows in any discipline with public venue guidance.
+The examples are academic-paper shaped, but the checks are intentionally
+general: sourced rules, verified citations, local outputs, and human sign-off.
 
-**Copilot, not pilot:** skills draft, check, and explain. You decide, you stay
-the author, and nothing is submitted anywhere on your behalf.
-
-## Quick start
+## Quick start (60 seconds)
 
 ```bash
 # Any Agent Skills-compatible environment
@@ -71,91 +83,14 @@ Claude Code plugin marketplace:
 /plugin install paper-submission@research-paper-lifecycle-skills
 ```
 
-Plugin bundles currently exposed in `.claude-plugin/marketplace.json`:
-`paper-search`, `paper-writing`, `paper-submission`, and `paper-presenting`.
-Use the Agent Skills CLI above to install the complete 41-skill package.
-
-Then just talk to your agent. The right skill should trigger itself.
-
-## At a glance
-
-| Stage | What the skills do for you |
-|---|---|
-| **Profile** | Capture your paper's positioning and local lessons so later passes stay calibrated. |
-| **Discover** | Find papers, fetch legal open-access copies, and study strong exemplars. |
-| **Write** | Draft abstracts, literature reviews, related work, polished prose, page-limit plans, and Overleaf round-trips. |
-| **Verify** | Check citations, originality, claims-vs-evidence, and desk-reject risks. |
-| **Submit** | Parse CFPs, pick venues and tracks, tailor, anonymize, and plan the deadline. |
-| **Artifacts** | Test, verify, refactor, and package research code for reproducibility review. |
-| **Respond** | Triage reviews and write rebuttals in common venue formats. |
-| **Publish** | Prepare camera-ready files and publication rails. |
-| **Present** | Build slides, scripts, Q&A drills, and posters. |
-
----
-
-## Usage examples
-
-Ask in plain language. Each example shows the request and what you get back.
-
-**Get unstuck fast**
-
-| You ask | You get |
-|---|---|
-| *"Will this get desk-rejected at an IEEE conference? Check my `main.tex` against this CFP."* | A preflight report with IEEE template, page-limit, anonymization, checklist, and policy risks tied to live requirements. |
-| *"Verify `refs.bib` and flag fabricated or mismatched citations."* | Entries checked against scholarly metadata sources, with wrong years, duplicates, suspicious records, and unresolved references surfaced. |
-| *"How good is my paper? One honest report."* | A paper-health report with strengths first, ranked fixes, integrity gates, and no acceptance prediction. |
-
-**Write and polish**
-
-| You ask | You get |
-|---|---|
-| *"Humanize this section, but do not change any claims."* | Cleaner academic prose with AI-tell phrasing removed while numbers, results, and citations stay fixed. |
-| *"Make this section match the voice of my previous papers."* | A style-aligned rewrite measured against the author's supplied corpus, with terminology and hedging conflicts surfaced. |
-| *"I am one page over the limit; what should I cut?"* | A section-budget map plus a ranked compression plan that preserves the paper's core evidence. |
-| *"My paper is on Overleaf. Pull it local, run checks, and help me sync back."* | A safe Git/GitHub/ZIP path, a local working copy, reviewed diffs, and confirm-first sync. |
-
-**Survive review and ship it**
-
-| You ask | You get |
-|---|---|
-| *"Turn these reviews into a rebuttal plan with severity and effort."* | A point-by-point matrix, prioritized response strategy, and handoff to the rebuttal skill. |
-| *"Write the rebuttal in the venue's response format."* | A response draft anchored to paper sections, figures, tables, and budget limits. |
-| *"Score this draft against recent award-winning SIGSPATIAL papers."* | A venue-fit scorecard that measures conformance, not acceptance odds. |
-| *"Walk me through ACM camera-ready."* | The eRights, ORCID, rights block, TAPS, source, and final-file checks in order. |
-
-**Run the whole thing**
-
-| You ask | You get |
-|---|---|
-| *"Take my idea and experiments toward a submission for venue X. What is done, blocked, and next?"* | `orchestrate-paper` plans the pipeline, invokes specialist skills, checkpoints with you, and re-verifies live CFP facts at each gate. |
-| *"Show me an HTML dashboard of my progress."* | A local `paper-workspace/dashboard.html` with stage progress, artifact links, and recent activity. |
-
-> Venue-aware skills can use a local venue profile if you have one. If not,
-> ask the agent to build one from the live CFP with `parse-cfp` or
-> `add-venue-profile`. Either way, rules are re-confirmed live before you rely
-> on them.
-
-### A worked example
+Then ask in plain language:
 
 ```text
-I have a method and results for streaming-trajectory indexing.
-Get it submission-ready for SIGSPATIAL.
+Will this get desk-rejected at an IEEE conference? Check my main.tex against this CFP.
 ```
 
-1. `paper-profile` records contribution type, target audience, constraints, and
-   risk appetite.
-2. `find-papers`, `literature-review`, and `verify-citations` build a verified
-   reference base.
-3. `write-abstract`, `draft-related-work`, `polish-prose`, and `match-style`
-   shape the draft without changing claims.
-4. `parse-cfp`, `tailor-to-venue`, `anonymize-paper`, and `preflight-check`
-   verify live requirements and desk-reject risks.
-5. `fit-page-limit`, `simulate-reviewers`, `benchmark-paper`, and
-   `assess-paper` produce the review-readiness pass.
-6. `render-workspace-html` gives a local dashboard of the resulting
-   `paper-workspace/` outputs.
-
----
+The right skill should trigger itself, load its `SKILL.md`, run any relevant
+helpers, and return a sourced report.
 
 ## How it works
 
@@ -165,23 +100,20 @@ Get it submission-ready for SIGSPATIAL.
 
 1. **Skills:** one folder per task. Each `SKILL.md` tells the agent when to
    use it, what to do, what to verify, and what not to touch.
-2. **Live verification:** venue facts, artifact rules, and citation claims can
-   go stale. Venue-aware skills build or re-check rules from the live CFP or
-   author instructions, double-check desk-reject-class facts when possible, and
-   treat unsourced rules as unverified.
-3. **Deterministic helpers:** bundled Python scripts handle repeatable checks
-   such as citation resolution, anonymization linting, page-budget maps,
-   timeline math, and dashboard rendering.
+2. **Live rules:** venue-aware skills build or re-check requirements from the
+   live CFP, author instructions, or public policy page. Unsourced facts stay
+   marked as unverified.
+3. **Deterministic helpers:** bundled scripts handle repeatable checks such as
+   citation resolution, anonymization linting, page-budget maps, timeline math,
+   and dashboard rendering.
 4. **Local workspace:** generated reports go into `paper-workspace/`; paper
-   preferences and lessons live in `.paper-memory/`. Both stay with the user's
-   paper, not in this package.
-
----
+   preferences and lessons can live in `.paper-memory/`. Both stay with the
+   user's paper, not in this package.
 
 ## Find the skill you need
 
 Open the linked `SKILL.md` for trigger rules, process, guardrails, references,
-and bundled scripts.
+and bundled scripts. The complete public package currently contains 41 skills.
 
 **Start here**
 
@@ -240,6 +172,7 @@ and bundled scripts.
 New paper:       paper-profile -> literature-review -> write-abstract -> draft-related-work -> polish-prose
 Before submit:   parse-cfp -> tailor-to-venue -> anonymize-paper -> preflight-check
 Quality pass:    verify-citations -> check-originality -> benchmark-paper -> simulate-reviewers -> assess-paper
+Reflection:      reflect-paper -> polish-prose / verify-claims -> reflect-and-improve
 Length pass:     fit-page-limit -> polish-prose / refactor-structure / polish-tables-figures
 Overleaf:        work-with-overleaf -> preflight-check / verify-citations / polish-prose -> work-with-overleaf
 Artifacts:       test-research-code -> verify-results -> refactor-research-code -> prepare-artifacts
@@ -248,9 +181,40 @@ Accepted:        prepare-camera-ready -> make-slides -> write-talk-script -> reh
 End to end:      orchestrate-paper
 ```
 
+## Usage examples
+
+| You ask | You get |
+|---|---|
+| *"Will this get desk-rejected at an IEEE conference? Check my `main.tex` against this CFP."* | A preflight report with template, page-limit, anonymization, checklist, and policy risks tied to live requirements. |
+| *"Verify `refs.bib` and flag fabricated or mismatched citations."* | Entries checked against scholarly metadata sources, with wrong years, duplicates, suspicious records, and unresolved references surfaced. |
+| *"Humanize this section, but do not change any claims."* | Cleaner academic prose with AI-tell phrasing removed while numbers, results, and citations stay fixed. |
+| *"I am one page over the limit; what should I cut?"* | A section-budget map plus a ranked compression plan that preserves the paper's core evidence. |
+| *"Turn these reviews into a rebuttal plan with severity and effort."* | A point-by-point matrix, prioritized response strategy, and handoff to the rebuttal skill. |
+| *"Show me an HTML dashboard of my progress."* | A local `paper-workspace/dashboard.html` with stage progress, artifact links, and recent activity. |
+
+**Worked example: idea to a clean SIGSPATIAL submission**
+
+```text
+I have a method and results for streaming-trajectory indexing.
+Get it submission-ready for SIGSPATIAL.
+```
+
+1. `paper-profile` records contribution type, target audience, constraints,
+   and risk appetite.
+2. `find-papers`, `literature-review`, and `verify-citations` build a verified
+   reference base.
+3. `write-abstract`, `draft-related-work`, `polish-prose`, and `match-style`
+   shape the draft without changing claims.
+4. `parse-cfp`, `tailor-to-venue`, `anonymize-paper`, and `preflight-check`
+   verify live requirements and desk-reject risks.
+5. `fit-page-limit`, `simulate-reviewers`, `benchmark-paper`, and
+   `assess-paper` produce the review-readiness pass.
+6. `render-workspace-html` gives a local dashboard of the resulting
+   `paper-workspace/` outputs.
+
 ## Integrations
 
-This is an Agent Skills package, not a Claude-only prompt bundle. The
+This is an Agent Skills package, not a single-agent prompt bundle. The
 repository ships portable `SKILL.md` folders plus optional scripts and
 references, so any agent that understands the Agent Skills format can use it.
 
@@ -261,6 +225,11 @@ references, so any agent that understands the Agent Skills format can use it.
 | Gemini CLI | `npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent gemini` |
 | Claude Code | `npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent claude-code` or `/plugin install ...` |
 | Any compatible agent | `npx skills add ShaishavMaisuria/research-paper-lifecycle-skills` |
+
+Optional Claude Code plugin bundles currently exposed in
+`.claude-plugin/marketplace.json`: `paper-search`, `paper-writing`,
+`paper-submission`, and `paper-presenting`. Use the Agent Skills CLI above to
+install the complete 41-skill package.
 
 Manual install for tools with their own skills directory:
 
@@ -278,20 +247,38 @@ Most tools forget you when the chat ends. This package uses a local
 so skills can reuse paper positioning, writing preferences, decisions, and
 lessons without uploading them.
 
+`reflect-paper` can run paired Researcher and Writer reflection passes: one
+checks evidence, novelty, positioning, and venue fit; the other checks story,
+structure, tone, and reader friction. `reflect-and-improve` then asks whether a
+change measurably helped before accepting it.
+
 `render-workspace-html` turns `paper-workspace/` into a local browser dashboard
 with progress, artifact cards, and recent activity. The dashboard is
 self-contained HTML, refreshable on request, and never uploaded by the skill.
 
+## What it won't do
+
+- **No acceptance predictions.** Scores measure conformance, completeness, and
+  quality signals; they do not predict reviewer decisions.
+- **No automatic submission.** Skills can prepare, check, and explain, but they
+  do not upload or submit a paper for you.
+- **No invented citations or venue facts.** Unresolved citations and unsourced
+  rules are marked as risks instead of being smoothed over.
+- **No bundled paper content.** Paper PDFs and copyrighted corpora are not
+  redistributed in this repository.
+- **No authorship laundering.** The skills can polish language and surface
+  issues, but you remain responsible for the work and final text.
+
 ## Principles
 
-1. **Human-led.** Skills draft, check, and explain; they do not submit anything.
+1. **Human-led.** Skills draft, check, and explain; the author decides.
 2. **Citation-aware.** Writing workflows route new references through
    verification instead of trusting plausible text.
 3. **Copyright-conscious.** Paper content is fetched only from legal open
    sources, on demand, and is not bundled in this repository.
 4. **Venue-skeptical.** Profiles and CFP facts can go stale; final rules must
    be checked live, with source links, before relying on them.
-5. **Lightweight.** The repository ships skills, scripts, README visuals, and
+5. **Portable.** The repository ships skills, scripts, README visuals, and
    package metadata; not paper PDFs or cached research corpora.
 
 ## Make it yours
