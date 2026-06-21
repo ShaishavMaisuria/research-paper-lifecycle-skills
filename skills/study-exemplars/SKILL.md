@@ -113,6 +113,10 @@ observations** (section names, counts, orderings, framing moves), not
 prose. Quotes: at most one short attributed fragment (<25 words) per paper,
 only when the exact wording is the observation.
 
+As you record each paper's counts, also log the **measurable** ones (pages,
+references, figures, tables, abstract words, teaser/badge booleans, section
+skeleton) into a small per-paper JSON — these feed step 6.
+
 ### 5. Synthesize the style-and-structure brief
 
 - Cross-paper synthesis first (what ≥ half the exemplars do = the venue
@@ -124,6 +128,33 @@ only when the exact wording is the observation.
 - Cite every exemplar by verified metadata (title, authors, year, DOI). If
   any entry will land in the user's bibliography, route it through
   `verify-citations`.
+
+### 6. Cache a measured exemplar bundle (data hygiene)
+
+The session's measurable facts are the on-family distribution downstream
+skills score drafts against. When a downstream skill's *live* exemplar fetch
+is skipped or rate-limited, it falls back to the venue/family profile's
+`exemplar_distribution:` block — which for most venues is **hand-estimated**,
+never measured. Cache yours so that fallback rests on real exemplars:
+
+```bash
+python3 scripts/build_exemplar_bundle.py measurements.json --out block.yml
+```
+
+This aggregates your per-paper measurements (from step 4) into a schema-
+conforming block: density **bands** (never fabricated single points), rates,
+and the modal skeleton, each stamped with `measured: true`, `n`, `recency`,
+and `as_of: <date>`. Paste it into the relevant profile under review
+(`venues/conferences/<id>.yml`, or `venues/families/<family>.yml` when the
+set spans the family), **replacing any hand-estimated block**. Bands from
+fewer than 3 papers are left `null` and the block is marked
+`measured-low-confidence` rather than overclaiming. Full rules and the input
+schema: [references/analysis-rubric.md](references/analysis-rubric.md) §14.
+
+Because the block carries `measured` + `as_of`, every score a consumer
+derives from it is labelled **cache-vs-live** (`live` / `family-prior
+(measured, as_of <date>)` / `family-prior (hand-estimated)` / `none`) — a
+cache-derived score never reads as if measured live.
 
 ## Output
 
@@ -140,6 +171,11 @@ directory, or wherever the user asks) containing:
 5. **Provenance** — scripts run, award-page URLs, date, and the note that
    citation counts are a snapshot (Semantic Scholar, ODC-BY, attributed)
 
+Plus, when measurements were taken, a **cached `exemplar_distribution:`
+block** (step 6) pasted into the relevant venue/family profile — the measured
+fallback downstream skills use when a live fetch fails, stamped `measured`,
+`n`, and `as_of`.
+
 The brief contains **only** metadata and original analysis — no abstracts,
 no reproduced passages, no extracted figures.
 
@@ -147,10 +183,14 @@ no reproduced passages, no extracted figures.
 
 - [references/analysis-rubric.md](references/analysis-rubric.md) — the
   analysis dimensions, what to record per paper, copyright line for
-  outputs, synthesis + exemplar-card templates
+  outputs, synthesis + exemplar-card templates, and §14 caching the measured
+  exemplar bundle (input schema + provenance labelling)
 - [references/finding-exemplars.md](references/finding-exemplars.md) —
   award sources and the verification protocol, top-cited selection
   methodology and caveats, OA resolution order, alias gotchas
+- `scripts/build_exemplar_bundle.py` — aggregates per-paper measurements into
+  a provenance-stamped `exemplar_distribution:` block (offline, stdlib;
+  invents nothing, suppresses thin bands)
 
 ## Guardrails
 
@@ -167,6 +207,13 @@ no reproduced passages, no extracted figures.
 - Venue profiles are a starting point, never ground truth — re-verify
   page limits, templates, and required sections against the live `cfp_url`
   before the user relies on them.
+- **Cache measurements, not text, and never overclaim them.** The cached
+  `exemplar_distribution:` block is counts/bands/section-names only (safe to
+  commit); never put paper text in it. It is a *fallback*, not ground truth —
+  a live corpus for the target venue still wins. Emit bands only from ≥3
+  papers (thinner → `null` / `measured-low-confidence`), never a fabricated
+  single point, and label every cache-derived score `cache-vs-live` so it
+  never reads as measured live this session.
 - Studying exemplars means learning *conventions*, not copying — never
   reproduce a specific paper's text, structure verbatim, or ideas without
   attribution. Never submit anything to any system on the user's behalf.

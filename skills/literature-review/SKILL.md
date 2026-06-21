@@ -62,6 +62,13 @@ contract.
    `python3 scripts/corpus.py --corpus <ws>/corpus.json import hits.json
    --source dblp --query "..."` (accepts `find-papers --json` output;
    dedupes on DOI). Add single papers with `corpus.py add`.
+4. Snowball from **multiple, topically-diverse seeds — one per theme**, not a
+   single convenient paper (which drifts the harvested set into one sub-area
+   and misses the rest). Admit each neighbor only if you can name its role in
+   the question's argument (method-we-extend / baseline / eval-task /
+   foundational-lineage), and run the co-citation sanity check before
+   screening. Full protocol in
+   [references/methodology.md](references/methodology.md#snowballing).
 
 ### Phase 3 — Screen
 
@@ -101,6 +108,10 @@ contract.
 
 1. Generate skeleton BibTeX:
    `python3 scripts/corpus.py --corpus ... bibtex > <ws>/references.bib`.
+   `corpus.py` is the **single source of truth for cite keys** — `bibtex`
+   emits the `.bib` with the corpus's exact keys. Never hand-edit a key in the
+   `.bib`; change it in the corpus (`corpus.py add --update`) and regenerate,
+   so the corpus, the `.bib`, and the review's `[@key]`s never diverge.
 2. Run the `verify-citations` skill on `references.bib`. Fix or drop anything
    unresolvable; flag retractions to the user.
 3. Only after a key passes: `corpus.py set KEY --verified yes`.
@@ -115,13 +126,35 @@ contract.
    `\cite{key}`. Claims must trace back to a note anchor — if there is no
    note, do not write the claim.
 
+### Phase 7b — Reconcile forward references
+
+The draft (and any related-work plan) names methods, baselines, and backbones
+in prose as slots — "we extend X", "compared against Y", "built on the W
+backbone". Make sure none ship unbacked:
+
+1. Run `python3 scripts/forward_refs.py <ws>/review.md [plan.md]
+   --corpus <ws>/corpus.json`. It extracts every named method/baseline/
+   backbone, diffs against the verified corpus, and emits the unresolved ones
+   as a **retrieval worklist**.
+2. For each genuine missing work, loop it back through the full pipeline
+   (find-papers → screen → fetch-paper → extract → verify-citations) before
+   the corpus is declared complete. Dismiss only the entries that are not
+   citable works (the user's own system, a dataset, a metric) — never invent a
+   citation to clear the list.
+3. Re-run until the worklist holds no real references.
+
 ### Phase 8 — Gate
 
-1. Run `python3 scripts/check_review.py <ws>/review.md`. It fails on unknown
-   keys, unverified or excluded citations, placeholder markers, and verbatim
-   quotes over 40 words; it warns on uncited included papers and uncited long
-   paragraphs.
-2. Fix and re-run until `RESULT: PASS`. Deliver only a passing document, and
+1. Assert the corpus and `references.bib` keys are in lock step:
+   `python3 scripts/corpus.py --corpus <ws>/corpus.json check-keys
+   <ws>/references.bib`. If it fails, regenerate the `.bib` from the corpus
+   (`corpus.py bibtex`) — never reconcile by hand-editing keys.
+2. Run `python3 scripts/check_review.py <ws>/review.md --bib
+   <ws>/references.bib`. It fails on unknown keys, unverified or excluded
+   citations, any cited key missing from the `.bib` (key drift), placeholder
+   markers, and verbatim quotes over 40 words; it warns on uncited included
+   papers and uncited long paragraphs.
+3. Fix and re-run until `RESULT: PASS`. Deliver only a passing document, and
    tell the user the review passed the coverage gate.
 
 ## Output
@@ -151,8 +184,9 @@ contract.
 ## References
 
 - [references/methodology.md](references/methodology.md) — query design,
-  venue enumeration patterns, snowballing, stopping criteria, screening
-  protocol.
+  venue enumeration patterns, multi-seed snowballing with role-based inclusion
+  and a co-citation sanity check, stopping criteria, screening protocol,
+  forward-reference reconciliation.
 - [references/claim-extraction.md](references/claim-extraction.md) — grounded
   note format, anchor and strength labels, copyright rules for notes.
 - [references/review-structure.md](references/review-structure.md) — review

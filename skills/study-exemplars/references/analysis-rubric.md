@@ -20,6 +20,7 @@ per-paper notes — is what the user writes against.
 11. [Writing micro-style](#11-writing-micro-style)
 12. [Cross-paper synthesis template](#12-cross-paper-synthesis-template)
 13. [Exemplar card template](#13-exemplar-card-template)
+14. [Cache a measured exemplar bundle](#14-cache-a-measured-exemplar-bundle)
 
 ## 1. The copyright line
 
@@ -213,3 +214,71 @@ One per paper, kept compact (25 lines or fewer):
 - Notable: <1–3 original observations worth imitating — own words>
 - Optional quote: "<25-word fragment>" (<section>, p. <n>)
 ```
+
+## 14. Cache a measured exemplar bundle
+
+The per-paper *facts* you just recorded (section skeletons, figure/table/
+reference counts, abstract word counts, teaser/badge presence) are not
+copyrightable expression — they are exactly the on-family distribution that
+downstream skills (e.g. `benchmark-paper`) score a draft against. The
+problem this step solves: when a downstream skill's **live exemplar fetch is
+skipped or rate-limited**, it falls back to the venue/family profile's
+`exemplar_distribution:` block — and for most venues that block is *hand-
+estimated*, never measured against real papers. A study session is the one
+moment those numbers can be measured, so cache them.
+
+**While analyzing each paper, also record the bundle inputs** (a number per
+field, never any text) into a small JSON file — one object per exemplar:
+
+```json
+{
+  "venue": "<S2 venue string>", "recency": "<Y1-Y2>",
+  "basis": "best-paper awardees + top-cited",
+  "source_urls": ["<award list>", "<proceedings index>"],
+  "papers": [
+    {"id": "doi:10.1145/…", "pages": 12, "refs": 58, "figures": 9,
+     "tables": 4, "abstract_words": 187, "teaser_figure": true,
+     "artifact_badge": true,
+     "sections": ["Introduction","Related Work","Method","Experiments","Conclusion"]}
+  ]
+}
+```
+
+Only counts, lengths, booleans, and section *names* — **never** abstracts,
+passages, figures, or pseudocode. Every paper needs a verified `id`.
+
+Then aggregate into a provenance-stamped block:
+
+```bash
+python3 scripts/build_exemplar_bundle.py measurements.json --out block.yml
+```
+
+The script emits a schema-conforming `exemplar_distribution:` block: density
+**bands** ([p10, p90], never a fabricated single point), rates, and the modal
+section skeleton — each annotated with how many papers it was measured from.
+It stamps `measured: true`, `n`, `recency`, `as_of: <date>`, and a
+`confidence` of `measured` (≥3 papers, clean) or `measured-low-confidence`
+(thin or flagged). It **invents nothing**: a band with <3 reporting papers is
+emitted as `null` (left for a live fetch), identical-everywhere numbers are
+flagged as a likely stub, and a paper without an `id` is rejected.
+
+**Caching rule (data hygiene, every venue):**
+
+- Paste the emitted block into the relevant profile under review — the
+  conference profile `venues/conferences/<id>.yml` for venue-specific
+  measurements, or the `venues/families/<family>.yml` profile when the set
+  spans the family. **Replace any hand-estimated block** with the measured
+  one; if you only have a thin set, keep `measured-low-confidence` so the
+  consumer knows the basis is shallow rather than overclaiming.
+- This upgrades the downstream fallback from "hand-written family
+  description" to "real measured exemplars". It does **not** make the cache
+  ground truth: a live `study-exemplars` corpus for the *target venue* still
+  wins, and the cache is the labelled fallback when a live fetch fails.
+- The block is metadata only (counts, bands, section names, URLs, a date) —
+  safe to commit under the copyright contract in §1. Never cache paper text.
+
+**Provenance labelling rule:** because the block carries `measured` and
+`as_of`, every score a consumer derives from it can — and must — disclose its
+basis as **cache-vs-live**: `live` (a corpus built this session), `family-
+prior (measured, as_of <date>)`, `family-prior (hand-estimated)`, or `none`.
+Never let a cache-derived score read as if it were measured live this session.

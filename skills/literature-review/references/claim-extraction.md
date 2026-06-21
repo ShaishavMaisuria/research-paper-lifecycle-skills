@@ -65,7 +65,10 @@ fact.
   sentences from the paper.
 - Verbatim quotes: only when the exact wording matters, **under 25 words**,
   inside quotation marks, with an anchor. (`check_review.py` hard-fails
-  quotes over 40 words in the final document.)
+  quotes over 40 words in the final document, including quotes that wrap
+  across lines. The guard only sees quotation-marked spans — transcribed
+  text *without* quote marks is invisible to it, which is exactly why the
+  paraphrase discipline in this file is a rule, not a suggestion.)
 - Fetched PDFs/HTML are transient: read them where `resolve_oa.py` put them
   (temp dir), do not copy them into the workspace or repo, do not commit
   them.

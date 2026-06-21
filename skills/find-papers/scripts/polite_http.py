@@ -8,10 +8,21 @@ Provides:
   - http_get(): polite GET with a per-host rate limit persisted across
     invocations, exponential backoff on HTTP 429 (honors Retry-After),
     and response caching under .cache/find-papers/ (gitignored).
+  - http_try(): same transport as http_get() but RAISES ProviderError on
+    failure instead of exiting the process. This is the failover primitive:
+    a single-provider script still hard-fails, but an orchestrator (e.g.
+    resolve_papers.py) can catch one provider's outage and degrade to the
+    other indexes rather than crashing or silently collapsing to whatever
+    happens to still answer.
+  - ProviderError: structured failure (provider, kind, message) so callers
+    can tell "provider down -> retry/fallback" apart from "no result".
+  - note_provider() / provider_report() / coverage_status(): a per-run
+    ledger of which authoritative indexes answered, were degraded, or were
+    unreachable, so a run can be honestly stamped COMPLETE vs PARTIAL.
 
 This module is not a CLI. It is imported by dblp_search.py,
-crossref_search.py, s2_search.py and arxiv_search.py, which live in the
-same directory.
+crossref_search.py, s2_search.py, arxiv_search.py and resolve_papers.py,
+which live in the same directory.
 """
 from __future__ import annotations
 
@@ -35,6 +46,70 @@ def fail(msg: str, code: int = 1):
     """Print a clear error to stderr and exit nonzero."""
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(code)
+
+
+class ProviderError(Exception):
+    """A provider lookup failed for *provider* reasons, not relevance.
+
+    `kind` is one of: 'http' (a non-2xx other than 429), 'rate_limit' (429s
+    exhausted), 'network' (resets/timeouts), 'parse' (unexpected body). An
+    orchestrator catches this to fail over to another index and to mark the
+    provider degraded/unreachable in the coverage ledger — it must NOT be
+    confused with a clean "0 results" answer, which is a real, complete
+    response from a healthy provider.
+    """
+
+    def __init__(self, provider: str, kind: str, message: str):
+        super().__init__(f"{provider}: {kind}: {message}")
+        self.provider = provider
+        self.kind = kind
+        self.message = message
+
+
+# --- per-run provider-coverage ledger ----------------------------------------
+# Records, for one orchestrated run, whether each authoritative index answered
+# cleanly, returned partial data, or was unreachable. Lets the run be stamped
+# COMPLETE vs PARTIAL so a degraded run is visibly flagged instead of being
+# reported as if it were exhaustive. In-process only (one run = one process).
+
+_PROVIDER_LEDGER: dict[str, dict] = {}
+
+
+def note_provider(provider: str, status: str, detail: str = "") -> None:
+    """Record a provider's outcome for this run.
+
+    status: 'ok' (answered cleanly), 'empty' (answered, no hits — still
+    healthy coverage), 'degraded' (answered but incomplete, e.g. capped or
+    a sub-query failed), or 'down' (unreachable / rate-limited out). The
+    worst status seen for a provider wins, so one failed sub-query downgrades
+    that provider for the whole run.
+    """
+    rank = {"ok": 0, "empty": 0, "degraded": 1, "down": 2}
+    prev = _PROVIDER_LEDGER.get(provider)
+    if prev is None or rank.get(status, 0) >= rank.get(prev["status"], 0):
+        _PROVIDER_LEDGER[provider] = {"status": status, "detail": detail}
+
+
+def coverage_status() -> str:
+    """'COMPLETE' iff every consulted provider answered; else 'PARTIAL'.
+
+    PARTIAL whenever any authoritative index was degraded or unreachable —
+    the signal that real, relevant papers may be missing for provider
+    reasons (rate limit / outage), not because they do not exist.
+    """
+    if not _PROVIDER_LEDGER:
+        return "COMPLETE"
+    worst = max((v["status"] for v in _PROVIDER_LEDGER.values()),
+                key=lambda s: {"ok": 0, "empty": 0, "degraded": 1, "down": 2}.get(s, 0))
+    return "COMPLETE" if worst in ("ok", "empty") else "PARTIAL"
+
+
+def provider_report() -> dict:
+    """Snapshot of the ledger plus the overall coverage verdict."""
+    return {
+        "coverage": coverage_status(),
+        "providers": {k: dict(v) for k, v in _PROVIDER_LEDGER.items()},
+    }
 
 
 def contact_email() -> str:
@@ -110,21 +185,24 @@ def _cache_path(url: str) -> str:
     return os.path.join(CACHE_DIR, f"{digest}.json")
 
 
-def http_get(
+def _http_core(
     url: str,
     *,
-    min_interval: float = 1.0,
-    headers: dict | None = None,
-    ttl: int = DEFAULT_TTL,
-    use_cache: bool = True,
+    min_interval: float,
+    headers: dict | None,
+    ttl: int,
+    use_cache: bool,
 ) -> str:
-    """Polite GET. Returns the response body as text.
+    """Polite GET shared by http_get() and http_try().
+
+    Returns the body on success. On failure raises ProviderError so the
+    caller decides whether to exit (single-provider script) or fail over to
+    another index (orchestrator). Never calls sys.exit itself.
 
     - serves from .cache/find-papers/ when a fresh (< ttl) entry exists
     - rate-limits to one request per min_interval seconds per host
-    - retries HTTP 429 with exponential backoff (2s, 4s, 8s; honors
-      Retry-After when larger)
-    - exits nonzero with a clear message on any other failure
+    - retries HTTP 429 / connection resets with exponential backoff
+      (2s, 4s, 8s; honors Retry-After when larger)
     """
     cpath = _cache_path(url)
     if use_cache:
@@ -167,12 +245,19 @@ def http_get(
                 time.sleep(sleep_s)
                 delay *= 2
                 continue
+            if e.code == 429:
+                raise ProviderError(
+                    host, "rate_limit",
+                    f"persistent HTTP 429 after {MAX_RETRIES} attempts; url={url}",
+                )
             detail = ""
             try:
                 detail = e.read().decode("utf-8", "replace")[:300]
             except Exception:
                 pass
-            fail(f"HTTP {e.code} from {host}\n  url: {url}\n  {detail}".rstrip())
+            raise ProviderError(
+                host, "http", f"HTTP {e.code}; url={url}; {detail}".rstrip()
+            )
         except (urllib.error.URLError, TimeoutError, OSError) as e:
             # Connection resets are how some hosts (e.g. dblp.org) shed
             # bursty clients — treat as transient and back off like a 429.
@@ -187,13 +272,62 @@ def http_get(
                 time.sleep(delay)
                 delay *= 2
                 continue
-    fail(
-        f"gave up after {MAX_RETRIES} attempts talking to {host}"
-        + (f" (last error: {last_err})" if last_err else " (persistent HTTP 429)")
-        + ". Wait a minute and retry. If this was api.semanticscholar.org, request "
-        "a free key and export S2_API_KEY for a dedicated 1 req/s allowance."
+    raise ProviderError(
+        host, "network",
+        f"gave up after {MAX_RETRIES} attempts"
+        + (f" (last error: {last_err})" if last_err else ""),
     )
+
+
+def http_get(
+    url: str,
+    *,
+    min_interval: float = 1.0,
+    headers: dict | None = None,
+    ttl: int = DEFAULT_TTL,
+    use_cache: bool = True,
+) -> str:
+    """Polite GET for single-provider scripts. Exits nonzero on any failure.
+
+    Identical transport to http_try(); the only difference is that a provider
+    failure here is fatal to the process (the right behavior when a user runs
+    one search script directly), whereas http_try() raises so an orchestrator
+    can fall back to another index.
+    """
+    try:
+        return _http_core(url, min_interval=min_interval, headers=headers,
+                          ttl=ttl, use_cache=use_cache)
+    except ProviderError as e:
+        extra = ""
+        if e.kind == "rate_limit" and "semanticscholar" in e.provider:
+            extra = (" Request a free key and export S2_API_KEY for a "
+                     "dedicated 1 req/s allowance.")
+        fail(f"{e.provider}: {e.message}. Wait a minute and retry.{extra}")
     raise AssertionError("unreachable")
+
+
+def http_try(
+    url: str,
+    *,
+    provider: str,
+    min_interval: float = 1.0,
+    headers: dict | None = None,
+    ttl: int = DEFAULT_TTL,
+    use_cache: bool = True,
+) -> str:
+    """Polite GET for orchestrators. Raises ProviderError instead of exiting.
+
+    `provider` is the human name recorded in the coverage ledger on failure
+    (the caller should also note_provider('ok'/'empty') on success). Catch
+    ProviderError to fail over to another index — do NOT let it abort the
+    whole run, and do NOT treat it as "0 results".
+    """
+    try:
+        return _http_core(url, min_interval=min_interval, headers=headers,
+                          ttl=ttl, use_cache=use_cache)
+    except ProviderError as e:
+        # Re-label with the friendly provider name for the ledger/report.
+        raise ProviderError(provider, e.kind, e.message) from None
 
 
 if __name__ == "__main__":

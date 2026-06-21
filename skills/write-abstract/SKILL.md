@@ -55,8 +55,15 @@ family-appropriate tone and word budget per move:
 Hard rules while drafting:
 
 - Results numbers come from the draft's evaluation or the user — NEVER
-  invent, round up, or extrapolate. If results are pending, leave an
-  explicit `[RESULT: ...]` slot and say so.
+  invent, round up, or extrapolate. The quantified result is the abstract's
+  single most-predictive surface; the results→impact arc cannot score in
+  the top band without it. If results are pending, leave exactly ONE typed
+  quantified-result slot — a structured contract with metric name, units,
+  sign/direction, and comparison target, e.g. `[RESULT: +XX% Recall@20 vs
+  best hashing baseline under matched budget]` — never a bare `[RESULT: ...]`
+  or free-text prose. Any bracketed slot leaves the abstract
+  DRAFT-not-submittable; bind every slot with a verified value before
+  delivery. Contract details: [references/abstract-structure.md](references/abstract-structure.md).
 - No `\cite`, `\ref`, math, or undefined acronyms in the abstract (it ships
   as standalone metadata). Any prior work named in prose that needs a
   citation elsewhere goes through `verify-citations`.
@@ -75,10 +82,18 @@ python3 skills/write-abstract/scripts/abstract_check.py <main.tex|abstract.txt|-
 ```
 
 Reports length vs the venue limit, keywords-block presence/shape,
-self-containedness (cite/ref/math/URL/placeholders), the acmart
-abstract-before-`\maketitle` gotcha, and lexical move signals. Fix RISK and
-WARN findings, re-run until RISK-free. `--venue` also accepts a family
-profile when no conference profile exists.
+self-containedness (cite/ref/math/URL/placeholders), the typed
+quantified-result-slot invariant, the acmart abstract-before-`\maketitle`
+gotcha, and lexical move signals. Fix RISK and WARN findings, re-run until
+RISK-free. `--venue` also accepts a family profile when no conference
+profile exists.
+
+The slot gate is non-overridable: the script prints an open-slot count and
+**hard-fails with a non-zero exit whenever any `[LABEL: ...]` slot remains**
+(independent of `--strict`), marking the abstract DRAFT-not-submittable. A
+results-pending draft passes only once its one typed RESULT slot — and any
+`[CONFIRM: ...]` slots — are bound with verified values written into the
+prose. Never satisfy the gate by inventing a number.
 
 ### 4. Generate the keywords block
 
@@ -128,8 +143,10 @@ that the user registers/submits themselves.
 
 ## Output
 
-- The abstract in LaTeX and plain text, RISK-free under
-  `abstract_check.py` for the target venue.
+- The abstract in LaTeX and plain text, RISK-free and with zero open slots
+  under `abstract_check.py` for the target venue (a results-pending draft is
+  delivered explicitly labeled DRAFT-not-submittable until its typed RESULT
+  slot is bound).
 - The venue-correct keywords block (or a note that the family has none).
 - When the venue registers abstracts: `abstract-registration-<venue-id>.md`
   with title, abstract, authors, topics, COI checklist, deadline math, and
@@ -138,7 +155,9 @@ that the user registers/submits themselves.
 ## Guardrails
 
 - Never fabricate results, numbers, or claims for the abstract; unverified
-  values stay as marked slots.
+  values stay as the one typed quantified-result slot (metric, units,
+  sign/direction, comparison target), and the abstract ships labeled
+  DRAFT-not-submittable until every slot is bound from real data.
 - Never fabricate citations or CCS concept ids; citations go through
   `verify-citations`, CCS ids come from dl.acm.org/ccs only.
 - Never state venue limits or deadlines from memory — profile + live-CFP

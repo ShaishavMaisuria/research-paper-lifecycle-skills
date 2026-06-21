@@ -163,7 +163,14 @@ empty venue as fact.
   proceedings, do not strip the contact email.
 - `CONTACT_EMAIL` must be a real address (Unpaywall rejects placeholders
   with HTTP 422; Crossref/DBLP use it to contact rather than block).
-- Metadata (DOI, title, authors, counts) may be kept and committed.
-  Paper text, abstracts, figures: fetch on demand, process transiently,
+- Metadata (DOI, title, authors, counts) may be kept and committed. This
+  includes the **measured exemplar bundle** — the aggregated
+  `exemplar_distribution:` block (density bands, rates, modal section names,
+  `n`, `recency`, `as_of` date) built by `build_exemplar_bundle.py` and
+  cached into a venue/family profile (rubric §14). Bands and counts are not
+  copyrightable expression; caching them is what lets a downstream fallback
+  rest on real measured exemplars instead of a hand-written family
+  description when a live fetch fails.
+- Paper text, abstracts, figures: fetch on demand, process transiently,
   never store, never commit, never redistribute. The full rule set lives
   at the top of [analysis-rubric.md](analysis-rubric.md).

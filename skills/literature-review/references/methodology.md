@@ -7,6 +7,7 @@
 - [Snowballing](#snowballing)
 - [Stopping criteria](#stopping-criteria)
 - [Screening protocol](#screening-protocol)
+- [Forward-reference reconciliation](#forward-reference-reconciliation)
 - [The search log](#the-search-log)
 
 ## Query design
@@ -66,17 +67,63 @@ container string on each hit during screening.
 
 ## Snowballing
 
-After the keyword/venue pass, expand from the 2–3 most central included
-papers (one call per paper, not bulk):
+### Seed from multiple, topically-diverse seeds — not one convenient paper
 
-- **Backward**: fetch the paper's reference list via
-  `s2_search.py` (S2 `/paper/{id}/references`) and screen titles that match
-  the criteria.
-- **Forward**: fetch citing papers via S2 `/paper/{id}/citations` — catches
-  work newer than the seed.
+The single biggest snowballing failure is seeding from one convenient paper.
+Its neighborhood is dominated by *that paper's* sub-area, so the harvested
+set drifts to adjacent-but-uncited siblings and silently misses the parts of
+the topic the one seed does not touch.
 
-One round of snowballing is usually enough. Import any adopted hits through
-`corpus.py import --source snowball` so provenance is recorded.
+Rule: pick **one seed per theme/sub-problem of the question** (so ≥3 seeds for
+a 3–6-theme review), and make them topically diverse:
+
+- spread the seeds across the question's axes (e.g. the method axis, the
+  task/application axis, the evaluation axis), not three papers from the same
+  cluster;
+- include the most-cited / most-central paper in each sub-area, so each
+  neighborhood is anchored on that sub-area's seminal work, not a peripheral
+  one;
+- if the question explicitly names a sub-area you have no seed for, that is a
+  gap — find a seed for it before snowballing, or the corpus cannot cover it.
+
+Then expand each seed (one call per paper, not bulk):
+
+- **Backward**: fetch the paper's reference list with find-papers'
+  single-paper lookup and nested fields (verified working pattern):
+  `s2_search.py --paper DOI:<doi> --fields title,references.title,references.externalIds,references.year --json`
+  then screen titles that match the criteria.
+- **Forward**: same lookup with
+  `--fields title,citations.title,citations.externalIds,citations.year` —
+  catches work newer than the seed.
+
+### Inclusion gate: role in THIS paper's argument
+
+A harvested neighbor enters the corpus only if you can name its **role in the
+question's argument**. Tag each adopted paper with one role:
+
+- `method-we-extend` — the work the review (or the user's paper) builds on;
+- `baseline` — something compared against, or that this line of work beats;
+- `eval-task` — defines a dataset/benchmark/metric the area is measured on;
+- `foundational-lineage` — the backbone / seminal ancestor the methods inherit.
+
+If a neighbor fits none of these roles for *this* question, it is an
+adjacent-but-uncited sibling — exclude it with that reason. This keeps the
+neighborhood from drifting into a different sub-area.
+
+### Co-citation sanity check
+
+After snowballing, sanity-check that you landed in the topic's real
+neighborhood, not a sibling one: take the question's seminal papers (the
+high-citation anchors) and confirm the adopted set has **non-trivial overlap**
+with their reference/citation lists. Near-zero overlap is a red flag that the
+seeds were off-area — re-seed before screening rather than shipping a corpus
+that misses the topic's core lineage. Record the check (which anchors, rough
+overlap) in the review's method section.
+
+One round of snowballing per seed is usually enough. Import any adopted hits
+through `corpus.py import --source snowball` so provenance is recorded, and set
+the role with `corpus.py set KEY --reason "role: baseline"` (or a `theme`/note
+tag) so the inclusion rationale is auditable.
 
 ## Stopping criteria
 
@@ -110,6 +157,43 @@ A lightweight PRISMA-style pass, tracked entirely in `corpus.json`:
 Excluded papers stay in the corpus with their reasons: that audit trail is
 what makes the review defensible (and `check_review.py` will fail any
 citation of an excluded paper).
+
+## Forward-reference reconciliation
+
+A draft or related-work plan names methods, baselines, and backbones in prose
+as slots to fill — "we extend X", "compared against Y and Z", "built on the W
+backbone". A recurring failure is that those named works are parked and the
+corpus ships without them: the prose leans on a name that no verified
+reference backs, silently breaking the citation chain. Worse, the missing ones
+are usually the *load-bearing* references — the very methods and baselines the
+argument stands on.
+
+Close the loop **after the draft/plan exists and before declaring the corpus
+complete**:
+
+1. Run the reconciliation gate over the draft (and the plan, if separate):
+
+   ```
+   python3 scripts/forward_refs.py review.md [plan.md] --corpus <ws>/corpus.json
+   ```
+
+   It extracts method/baseline/backbone-shaped names (acronyms, CamelCase
+   system names, hyphenated model names, and explicit `<SLOT>` markers),
+   diffs them against the corpus keys and included-paper titles, and emits the
+   unresolved ones as a **retrieval worklist**.
+
+2. Treat the worklist as mandatory work, not advice. For each genuine missing
+   work, loop it back through the full pipeline — `find-papers` search →
+   screen → `fetch-paper` → extract → `verify-citations` — exactly like any
+   other paper. Never hand-add it straight to the references.
+
+3. The extractor is heuristic (a copilot, not an oracle): some entries will be
+   the user's own system, a dataset, or a metric, not a citable work. Dismiss
+   those deliberately; do not let them push you to invent a citation.
+
+4. Re-run until the worklist is empty of real references, then the corpus is
+   complete. The gate is warn-only by default; use `--strict` (exit 1 on any
+   unresolved name) when wiring it into a pre-finalization check.
 
 ## The search log
 

@@ -6,15 +6,17 @@ positions the paper instead of summarizing the field.
 ## Table of contents
 
 1. [What a Related Work section is for](#what-a-related-work-section-is-for)
-2. [Choosing the clustering axis](#choosing-the-clustering-axis)
-3. [The per-cluster paragraph pattern](#the-per-cluster-paragraph-pattern)
-4. [Articulating the delta](#articulating-the-delta)
-5. [The closest competitor gets its own paragraph](#the-closest-competitor-gets-its-own-paragraph)
-6. [Comparison tables](#comparison-tables)
-7. [Concurrent and very recent work](#concurrent-and-very-recent-work)
-8. [Length and citation budgets](#length-and-citation-budgets)
-9. [Anti-patterns reviewers punish](#anti-patterns-reviewers-punish)
-10. [Rewrite procedure for an existing laundry list](#rewrite-procedure-for-an-existing-laundry-list)
+2. [Required clusters from claimed scope](#required-clusters-from-claimed-scope)
+3. [The coverage gate and gap routing](#the-coverage-gate-and-gap-routing)
+4. [Choosing the clustering axis](#choosing-the-clustering-axis)
+5. [The per-cluster paragraph pattern](#the-per-cluster-paragraph-pattern)
+6. [Articulating the delta](#articulating-the-delta)
+7. [The closest competitor gets its own paragraph](#the-closest-competitor-gets-its-own-paragraph)
+8. [Comparison tables](#comparison-tables)
+9. [Concurrent and very recent work](#concurrent-and-very-recent-work)
+10. [Length and citation budgets](#length-and-citation-budgets)
+11. [Anti-patterns reviewers punish](#anti-patterns-reviewers-punish)
+12. [Rewrite procedure for an existing laundry list](#rewrite-procedure-for-an-existing-laundry-list)
 
 ## What a Related Work section is for
 
@@ -29,6 +31,88 @@ Corollary: prior work is selected for relevance to the claim, not for
 completeness. Completeness is the job of `literature-review`; here, a paper
 earns a citation by sharpening the delta (or by being something a likely
 reviewer would notice missing).
+
+## Required clusters from claimed scope
+
+The most common silent failure is letting the *retrieved corpus* decide the
+section's structure. `find-papers` returns what a query happened to surface;
+if you cluster only that pile, the outline positions confidently against
+retrieved-but-peripheral work while leaving a structural hole exactly where
+the paper lives — the direct competitor never queried, the foundational
+lineage the sub-area is built on, a whole expected sub-area with zero
+citations. Reviewers read that hole as "the authors don't know their own
+neighbourhood." Recurring real shapes: a modality-benchmark cluster missing
+its named direct prior; an accessibility/application neighbourhood absent
+entirely; a deep-structure or scale-space lineage with no canonical anchor; a
+covariate-shift variant cited without its base method; a robust-aggregation
+family represented by one paper; a frontier sub-area's last two years missing.
+
+The fix is to derive the clusters the section MUST contain from the paper's
+*own claimed scope*, before and independently of retrieval:
+
+1. **Enumerate the claimed scope.** From the brief/intro/abstract, list every
+   contribution, sub-task, and stated requirement (modality handled, setting,
+   guarantee, deployment constraint). One line each.
+2. **For each, name the required clusters — citation-free at this stage:**
+   - a **direct-prior-approach** cluster: the line of work that already
+     attacks *this* sub-task (the competitors a reviewer expects you to beat
+     or build on). At least one per contribution.
+   - a **foundational-lineage / canonical-anchor** check: the originating
+     method or canonical result the sub-area rests on. Cite the origin of an
+     idea, not only the latest refinement — a cluster that skips its anchor
+     reads as unaware of the field.
+   - optionally **adjacent** clusters a reviewer would expect to see
+     distinguished (neighbouring problems, alternative settings).
+3. **Mark each cluster `expected`** when a competent reviewer would notice it
+   missing. These are the ones whose absence is a reject risk, not a stylistic
+   choice.
+
+This list is the *target structure*. It generalizes across papers and venues
+precisely because it is generated from the claim, not from whatever a search
+returned. Only after it exists do you map the retrieved pool onto it (next
+section). Driving structure from scope is what converts "we cited what we
+found" into "we covered what the paper requires."
+
+Keep the target honest: do not invent a cluster the paper does not actually
+need to position against just to look thorough — that is survey drift. The
+test is "would a reviewer fault its absence?", not "does the area exist?".
+
+## The coverage gate and gap routing
+
+Once the required clusters exist and the pool is retrieved, assign each
+retrieved paper to a required cluster and run the gate deterministically:
+
+```
+python3 scripts/check_coverage.py plan.json    # or the text form; see --help
+```
+
+The plan lists one block per required cluster with the verified cite keys
+assigned to it. The script applies two thresholds:
+
+- **Citation floor (per cluster, default 2):** a cluster below the floor
+  WARNs. A cluster resting on a single citation is a reviewer target — one
+  paper cannot characterize a "line of work."
+- **Zero-citation FAIL:** a required cluster with no citations is a blocking
+  structural hole. The script exits 3 and emits a *second-pass retrieval
+  worklist*.
+
+Routing the gap (the part that matters):
+
+- A failing or thin required cluster is **not** an author to-do to bury in the
+  draft. Take the worklist back to `find-papers` as a targeted second pass
+  (scoped to that cluster's sub-task and the venue's norms), retrieve, verify,
+  re-assign, and re-run the gate.
+- Repeat until every required cluster clears the floor, OR the user explicitly
+  accepts a documented thin/empty cluster (e.g. the sub-area genuinely has no
+  prior work — a real "first to X under constraint Y", stated as such). That
+  acceptance is the user's call, surfaced — never the skill's silent default.
+- Never close a hole by stretching an adjacent cluster to pretend coverage, or
+  by deleting the contribution from the claimed scope to make the gap vanish.
+
+Only a cleared gate (or an explicitly accepted exception) licenses drafting
+prose. This is the anti-structural-hole counterpart to the anti-hallucination
+audit: `check_coverage.py` guards what's *missing*, `audit_bib.py` /
+`verify-citations` guard what's *present*.
 
 ## Choosing the clustering axis
 
@@ -170,12 +254,24 @@ Every cell is a claim — each must be checkable against the cited paper.
 
 ## Length and citation budgets
 
+- **Calibrate to the venue's measured exemplar median, not to maximal
+  coverage.** Read the target profile's `exemplar_distribution` (its
+  `related_work` band when present, else `refs_per_page` × the section's page
+  budget); when no on-family distribution is recorded, measure 3–5 recent
+  accepted papers via `study-exemplars`. The numbers below are a fallback
+  prior, not a target to max out — over-citing to look thorough reads as
+  survey drift, and a section much longer than the venue's exemplars signals
+  an author who mistakes coverage for positioning.
 - Conference papers (10–12 page venues): 0.5–1 page, typically 15–40
   references engaged in Related Work. 4-page short/demo papers: one tight
   paragraph to half a page.
 - ML venues (9-page NeurIPS-style): often 0.3–0.6 page in the main body.
 - CHI/HCI and journals: materially longer (often 1.5+ pages) with deeper
   per-work engagement — see placement-conventions.md.
+- The required-cluster floor and the exemplar median are complementary
+  bounds: the floor sets the *minimum* breadth (no expected cluster empty, no
+  cluster on one citation), the median caps the *maximum* (do not balloon past
+  what the venue's strong papers do). Aim between them.
 - Sentence-per-citation ratio: most citations get a clause, not a sentence;
   only cluster representatives and the closest competitor get full
   sentences. If every citation has its own sentence, it is a laundry list.
@@ -196,18 +292,29 @@ Every cell is a claim — each must be checkable against the cited paper.
 | Closest competitor buried | The obvious rival appears mid-list with one clause | Dedicated paragraph with concrete distinctions |
 | Self-citation overload | Author's own prior papers dominate clusters | Cite own work only where genuinely load-bearing; voice per blind level |
 | Unverified citations | Entries with no DOI/arXiv ID, plausible-sounding titles | `audit_bib.py` flags them; verify or remove |
-| Survey drift | Section reads as a mini-survey of the area | Cut anything that does not sharpen a delta or pre-empt a reviewer |
+| Structural hole | A direct competitor / canonical lineage / whole expected sub-area is simply absent; the corpus drove the structure | Derive required clusters from claimed scope; `check_coverage.py` FAILs the empty cluster; route to `find-papers` |
+| Cluster-on-one-citation | A "line of work" represented by a single paper | Citation floor (≥2) via `check_coverage.py`; second-pass retrieval or merge |
+| Survey drift | Section reads as a mini-survey of the area | Cut anything that does not sharpen a delta or pre-empt a reviewer; cap length at the venue's exemplar median |
 
 ## Rewrite procedure for an existing laundry list
 
-1. Extract every cited work from the section (`scripts/audit_bib.py` gives
+1. Derive the required clusters from the paper's claimed scope FIRST (§
+   Required clusters from claimed scope) — independently of what the existing
+   section happens to cite. This is the structure the rewrite must hit; the
+   old section's citation list is evidence, not the target.
+2. Extract every cited work from the section (`scripts/audit_bib.py` gives
    the key list; the worksheet from `gather_candidates.py` gives metadata).
-2. Cluster the existing citations first — do not discard any yet.
-3. Find the gaps: clusters a reviewer would expect that have no members →
-   run `find-papers` to fill them; singleton clusters → merge or cut.
-4. Write the new section from the cluster plan (pattern above), reusing
-   accurate characterizations from the old text.
-5. Diff old vs new citation sets for the user: dropped (and why), added
+3. Map the existing citations onto the required clusters — do not discard any
+   yet. Existing clusters that match no required cluster are candidates to cut
+   (survey drift); required clusters that no existing citation fills are the
+   holes the laundry list was masking.
+4. Run the coverage gate (`check_coverage.py`): every empty/thin required
+   cluster's worklist goes to `find-papers` for a targeted second pass.
+   Singleton clusters → fill to the floor, merge, or cut. Re-run until clear.
+5. Write the new section from the cluster plan (pattern above), reusing
+   accurate characterizations from the old text, calibrated to the venue's
+   exemplar median.
+6. Diff old vs new citation sets for the user: dropped (and why), added
    (and from where they were retrieved). Dropped citations are a user
    decision, not a silent one.
-6. Audit + verify (SKILL.md steps 6–7).
+7. Audit + verify (SKILL.md audit and verify-citations steps).

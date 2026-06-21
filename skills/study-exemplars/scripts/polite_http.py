@@ -199,3 +199,14 @@ def http_get(
         "a free key and export S2_API_KEY for a dedicated 1 req/s allowance."
     )
     raise AssertionError("unreachable")
+
+
+if __name__ == "__main__":
+    if any(a in ("-h", "--help") for a in sys.argv[1:]):
+        print(__doc__)
+        sys.exit(0)
+    fail(
+        "polite_http.py is a shared library, not a command. Run one of:\n"
+        "  python3 scripts/rank_top_cited.py --help\n"
+        "  python3 scripts/lookup_exemplar.py --help"
+    )

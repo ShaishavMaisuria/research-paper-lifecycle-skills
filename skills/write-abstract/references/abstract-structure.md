@@ -7,6 +7,7 @@ seamless paragraph.
 ## Contents
 
 - [The five moves](#the-five-moves)
+- [The typed result slot](#the-typed-result-slot)
 - [Budgeting words across moves](#budgeting-words-across-moves)
 - [Family tone differences](#family-tone-differences)
 - [Anti-patterns](#anti-patterns)
@@ -33,15 +34,62 @@ Rules per move:
 3. **Approach** — name the system/method once, then give the single
    technical idea that makes it work. Resist listing every component; the
    intro does that.
-4. **Results** — use real numbers from the paper's evaluation. NEVER invent,
-   round up, or extrapolate numbers: pull them from the draft or ask the
-   user. If results are not final, leave an explicit `[RESULT: ...]` slot
-   for the user — do not write placeholder prose that could be mistaken
-   for a finding (and never register a placeholder abstract; see
-   [venue-norms.md](venue-norms.md)).
+4. **Results** — the single most-predictive surface of the abstract: a
+   reviewer skims here first and the results→impact arc cannot score in the
+   top band without it. Use real numbers from the paper's evaluation. NEVER
+   invent, round up, or extrapolate numbers: pull them from the draft or ask
+   the user. If results are not final, leave exactly ONE **typed
+   quantified-result slot** (see [the typed result slot](#the-typed-result-slot)
+   below) — never bare `[RESULT: ...]` and never placeholder prose that
+   could be mistaken for a finding (and never register a placeholder
+   abstract; see [venue-norms.md](venue-norms.md)).
 5. **Impact** — one sentence. Generalization, artifact availability
    ("code is open source" — but check the blind level before naming a URL),
    or the door the result opens. Cut this move first when over budget.
+
+## The typed result slot
+
+When results are not yet final, the abstract still must keep its
+results→impact arc structurally complete. Do this with a **typed
+quantified-result slot**: exactly one designated slot, written as a
+structured contract rather than free text, so it is trivially fillable later
+and a machine can tell whether it is bound.
+
+The contract carries four parts:
+
+| Part | What it pins down | Example token |
+|---|---|---|
+| Metric name | which measure is reported | `Recall@20`, `p99 latency`, `BLEU` |
+| Units | how it is denominated | `%`, `pp` (percentage points), `ms`, `×` |
+| Sign / direction | improvement vs regression, up vs down | `+`, `−`, "higher", "lower" |
+| Comparison target | what it is measured against | `vs best hashing baseline`, `over SOTA`, `relative to prior under matched budget` |
+
+Write the slot as a single bracketed contract, not prose:
+
+```
+... NAME achieves [RESULT: +XX% Recall@20 vs best hashing baseline under matched budget].
+```
+
+Rules:
+
+- **Exactly one** RESULT slot per abstract. Secondary numbers live in the
+  body, not the abstract; if you have two headline numbers, pick the one a
+  reviewer would quote and merge the rest.
+- **Typed, never bare.** `[RESULT: ...]`, `[RESULT: substantially better]`,
+  or "significantly outperforms prior work" are all rejected by the linter:
+  they leave the most-predictive surface incomplete and unfillable. The
+  comparison target is mandatory — a number with no baseline does not score.
+- **A bracketed slot is never submittable.** Even a fully-typed
+  `[RESULT: +12% Recall@20 vs ...]` is treated as an *open slot* until you
+  replace the bracket with the verified number written into the prose. The
+  linter counts open slots and **hard-fails** (non-zero exit, independent of
+  `--strict`) while any remain — the abstract is DRAFT-not-submittable.
+- **Fill it from the evaluation, never invent it.** When the real number
+  arrives, drop the brackets and the `RESULT:` label and bind the value into
+  the sentence; keep the metric/units/sign/target the contract already named.
+- Use the same `[LABEL: ...]` form for any other deferred fact
+  (`[CONFIRM: which workload?]`); every such slot is counted and gates
+  submission the same way.
 
 ## Budgeting words across moves
 
@@ -75,7 +123,9 @@ For a 150-250 word abstract (the dominant norm — see
 - `\ref`/math/URLs — break in HTML/metadata renderings; the linter warns.
 - "In this paper" more than once; "novel" anywhere (show, don't label).
 - Undefined acronyms beyond universally known ones (GPU, SQL, ML).
-- Results vagueness: "significantly outperforms" with no number.
+- Results vagueness: "significantly outperforms" with no number — and, while
+  results are pending, a bare `[RESULT: ...]` instead of the typed slot
+  contract ([the typed result slot](#the-typed-result-slot)).
 - Identity leaks at double-blind venues: institution names, "our previous
   work [X]", named GitHub orgs.
 - Abstract that promises more than the paper's evaluation shows — reviewers
@@ -86,8 +136,10 @@ For a 150-250 word abstract (the dominant norm — see
 1. Extract from the draft (or user): problem, failing assumption of prior
    work, contribution name + key idea, the 1-3 strongest verified numbers,
    artifact status.
-2. Write one sentence per move, in order. Mark unverifiable facts
-   `[CONFIRM: ...]`.
+2. Write one sentence per move, in order. If results are pending, write the
+   results move as exactly one typed slot
+   ([the typed result slot](#the-typed-result-slot)); mark any other
+   unverifiable fact `[CONFIRM: ...]`.
 3. Merge sentences into a paragraph; cut to the venue's word budget
    (cut impact → motivation adjectives → secondary results, in that order).
 4. Run the linter (`scripts/abstract_check.py`) and fix RISK/WARN findings.

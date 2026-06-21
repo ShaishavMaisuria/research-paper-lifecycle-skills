@@ -6,9 +6,15 @@ Checks review.md against corpus.json:
   FAIL  unknown key        cited key not present in the corpus
   FAIL  unverified key     cited paper whose status.verified is not true
   FAIL  excluded key       cited paper that was screened out
-  FAIL  placeholder        [CITATION NEEDED], [@TODO], [@?], or '??' markers
-  FAIL  long quote         verbatim quoted span > --max-quote-words words
-                           (copyright guard: paraphrase, do not transcribe)
+  FAIL  bib drift          (only with --bib) a cited key with no entry in the
+                           given references.bib -- corpus/.bib key divergence
+                           that silently breaks the verified-citation chain
+  FAIL  placeholder        [CITATION NEEDED], [@TODO], [@?], '??'/'???' markers
+  FAIL  long quote         verbatim quoted span > --max-quote-words words,
+                           including spans that wrap across lines within a
+                           paragraph (copyright guard: paraphrase, do not
+                           transcribe). Only quotation-marked spans are
+                           detectable -- unmarked transcription is on you.
   WARN  uncited paper      included+extracted paper never cited (use --strict
                            to make this a failure)
   WARN  bare paragraph     body paragraph > --para-chars chars with no citation
@@ -30,14 +36,20 @@ import re
 import sys
 from pathlib import Path
 
+BIB_KEY_RE = re.compile(r"@\s*[A-Za-z]+\s*[{(]\s*([^,\s{}()\"]+)")
 PANDOC_GROUP_RE = re.compile(r"\[([^\[\]]*@[^\[\]]+)\]")
 PANDOC_KEY_RE = re.compile(r"@([A-Za-z0-9][A-Za-z0-9_:.#$%&+?<>~/-]*)")
 LATEX_CITE_RE = re.compile(r"\\cite[tp]?\*?(?:\[[^\]]*\])?\{([^}]*)\}")
 PLACEHOLDER_RE = re.compile(
-    r"\[CITATION NEEDED\]|\[@TODO\]|\[@\?\]|\[@\]|(?<!\?)\?\?(?!\?)",
+    r"\[CITATION NEEDED\]|\[@TODO\]|\[@\?\]|\[@\]|\?\?+",
     re.IGNORECASE,
 )
-QUOTE_RE = re.compile(r'"([^"\n]{20,})"|“([^”\n]{20,})”')
+# Quoted spans may wrap across lines inside one paragraph (single newlines
+# allowed, blank lines end the span so stray quotes never pair up across
+# paragraphs). Both straight and curly double quotes.
+QUOTE_RE = re.compile(
+    r'"((?:[^"\n]|\n(?!\s*\n)){20,}?)"|“((?:[^”\n]|\n(?!\s*\n)){20,}?)”'
+)
 HEADING_RE = re.compile(r"^#{1,6}\s")
 
 
@@ -74,6 +86,18 @@ def cited_keys(text: str) -> dict[str, list[int]]:
                 key = key.strip()
                 if key:
                     keys.setdefault(key, []).append(i)
+    return keys
+
+
+def bib_keys(path: Path) -> set[str]:
+    """Cite keys defined in a .bib file (skips @string/@comment/@preamble)."""
+    text = path.read_text(encoding="utf-8")
+    keys = set()
+    for m in BIB_KEY_RE.finditer(text):
+        head = text[m.start():m.start() + 40].lower().lstrip("@ ")
+        if head.startswith(("string", "comment", "preamble")):
+            continue
+        keys.add(m.group(1))
     return keys
 
 
@@ -114,6 +138,9 @@ def main() -> None:
     p.add_argument("--para-chars", type=int, default=300, metavar="N",
                    help="paragraphs longer than this with no citation are "
                         "warned about (default 300)")
+    p.add_argument("--bib", metavar="PATH",
+                   help="also assert every cited key has an entry in this "
+                        ".bib (cross-file key-consistency gate)")
     args = p.parse_args()
 
     review_path = Path(args.review)
@@ -152,19 +179,33 @@ def main() -> None:
                 f"skill, then: corpus.py set {key} --verified yes"
             )
 
+    if args.bib:
+        bibpath = Path(args.bib)
+        if not bibpath.exists():
+            fail(f"bib file not found: {args.bib}")
+        bkeys = bib_keys(bibpath)
+        for key, lines in sorted(cites.items()):
+            if key not in bkeys:
+                where = f"line {lines[0]}"
+                failures.append(
+                    f"bib drift     [@{key}] cited at {where} but missing from "
+                    f"{bibpath.name} -- regenerate it: corpus.py bibtex > "
+                    f"{bibpath.name}"
+                )
+
     for i, line in enumerate(text.splitlines(), 1):
         if PLACEHOLDER_RE.search(line):
             failures.append(f"placeholder   line {i}: unresolved citation marker")
 
-    for i, line in enumerate(text.splitlines(), 1):
-        for m in QUOTE_RE.finditer(line):
-            span = m.group(1) or m.group(2)
-            words = len(span.split())
-            if words > args.max_quote_words:
-                failures.append(
-                    f"long quote    line {i}: {words}-word verbatim quote -- "
-                    f"paraphrase (limit {args.max_quote_words} words)"
-                )
+    for m in QUOTE_RE.finditer(text):
+        span = m.group(1) or m.group(2)
+        words = len(span.split())
+        if words > args.max_quote_words:
+            lineno = text.count("\n", 0, m.start()) + 1
+            failures.append(
+                f"long quote    line {lineno}: {words}-word verbatim quote -- "
+                f"paraphrase (limit {args.max_quote_words} words)"
+            )
 
     for key, rec in sorted(papers.items()):
         s = rec.get("status", {})

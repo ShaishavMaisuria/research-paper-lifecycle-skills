@@ -26,7 +26,15 @@ as the ground truth (`find-papers` DBLP toc query or `study-exemplars`).
    commands), page limit (changes the section's budget). Profiles are
    year-versioned but can still be stale; a wrong blind level produces a
    desk-rejectable draft.
-4. Confirm placement/length empirically when in doubt (last section below).
+4. **Calibrate length/breadth to the measured exemplar median, not maximal
+   coverage.** Read the profile's `exemplar_distribution`: use its
+   `related_work` band (`pages` / `refs` / `clusters`) when present, else
+   derive a length budget from `refs_per_page` × the section's page share.
+   When no on-family distribution is recorded, measure 3–5 recent accepted
+   papers via `study-exemplars` (last section below). The family table below
+   is a prior, not a target to max out — a Related Work section materially
+   longer or denser than the venue's own strong papers reads as survey drift.
+5. Confirm placement/length empirically when in doubt (last section below).
 
 ## Placement and depth by venue family
 
@@ -83,7 +91,8 @@ Rules:
 Read `review.blind` from the venue profile, then re-verify on the live CFP —
 this is a desk-reject axis.
 
-- **Double/triple blind** (NeurIPS, ICML, ICLR, CHI, SIGMOD, ICDE...):
+- **Double/triple blind** (NeurIPS, ICML, ICLR, CHI, SIGMOD, KDD Research,
+  WWW Research; ICDM is triple-blind):
   cite your own prior work in third person, exactly like anyone else's:
   "Chen et al. [9] introduced X" — never "our prior work [9]", "we
   previously showed [9]", or "building on our system [9]". The combination
@@ -92,7 +101,8 @@ this is a desk-reject axis.
   do not write it in the first place. Unpublished own work that must be
   referenced: anonymize ("Anonymous, under review") only per the venue's
   stated policy.
-- **Single blind** (SIGSPATIAL, VLDB industrial tracks, most journals):
+- **Single blind** (SIGSPATIAL, VLDB, ICDE, EDBT, TKDE-style IEEE journals;
+  note TODS is double-blind — always check the profile):
   first-person self-citation is permitted: "we extend our earlier index
   [9] with...". Still keep self-citations proportionate — reviewers notice
   padding.

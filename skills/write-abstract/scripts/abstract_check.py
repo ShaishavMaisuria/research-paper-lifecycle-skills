@@ -11,8 +11,18 @@ against a venue profile's norms:
     LNCS \\keywords{a \\and b}, or none (NeurIPS-style)
   - self-containedness: \\cite / \\ref / math / URLs / placeholders in the
     abstract (abstracts ship as standalone metadata)
+  - the quantified-result-slot invariant: an abstract is DRAFT-not-
+    submittable while it still carries any unresolved slot. Every
+    results-pending draft must carry exactly ONE designated quantified-
+    result slot, written as a typed contract — [RESULT: metric, units,
+    sign/direction, comparison-target] — not free-text prose, so the
+    result->impact arc is structurally complete and the slot is trivially
+    fillable. Bare/free-text slots and >1 result slot are flagged; any
+    unresolved slot HARD-FAILS the run (non-zero exit) regardless of
+    --strict, and the open-slot count is printed.
   - acmart gotcha: abstract must appear BEFORE \\maketitle
-  - lexical motivation/gap/approach/results/impact move signals (INFO only)
+  - lexical gap/approach/results/impact move signals (INFO only; the
+    motivation move has no reliable lexical signal — judge it by reading)
 
 Severities: RISK (likely desk-reject / metadata breakage), WARN (norm
 violation), INFO (signal for human/LLM judgment).
@@ -24,7 +34,10 @@ Usage:
 --venue accepts a conference profile (venues/conferences/*.yml, family
 merged automatically) or a family profile (venues/families/*.yml).
 
-Exit codes: 0 ok, 1 RISK findings present with --strict, 2 bad input.
+Exit codes: 0 ok, 1 RISK findings present with --strict OR any unresolved
+slot left (the invariant hard-fails independent of --strict), 2 bad input.
+The slot gate is intentionally non-overridable: a draft with an open slot is
+not submittable, so the script refuses to report success for it.
 """
 
 import argparse
@@ -105,6 +118,31 @@ _PLACEHOLDER_RE = re.compile(r"\b(TODO|TBD|FIXME|XXX+|PLACEHOLDER)\b|lorem ipsum
                              re.I)
 _URL_RE = re.compile(r"https?://\S+|\\url\{")
 
+# Unresolved fill-in slots of the form [LABEL: ...]. LABEL is an all-caps
+# token; RESULT is the designated quantified-result slot, CONFIRM marks a
+# fact the user must verify; any other all-caps slot is a generic open slot.
+# Matches across the abstract; the body is captured so the RESULT slot can be
+# checked against the typed contract.
+_SLOT_RE = re.compile(r"\[\s*([A-Z][A-Z0-9_-]*)\s*:\s*(.*?)\]", re.S)
+
+# A bound RESULT slot is a typed contract carrying, at minimum: a numeric
+# magnitude (the metric value) AND a comparison target ("vs"/"over"/"than"/
+# "relative to"/"compared to"/"baseline"). The metric name + units live in the
+# same token (e.g. "+12% Recall@20 vs best hashing baseline under matched
+# budget"). These signals are what distinguish a fillable typed slot from a
+# bare "[RESULT: ...]" or free-text prose placeholder.
+_RESULT_MAGNITUDE_RE = re.compile(r"[-+]?\d+(?:\.\d+)?\s*"
+                                  r"(?:%|×|x\b|pp\b|ms\b|s\b|fps\b|gb\b|"
+                                  r"qps\b|points?\b|percentage points?\b)?",
+                                  re.I)
+_RESULT_COMPARE_RE = re.compile(r"\b(vs\.?|versus|over|than|relative to|"
+                                r"compared to|against|baseline|prior|"
+                                r"state[- ]of[- ]the[- ]art|sota)\b", re.I)
+# The slot is still an unfilled template if its body is empty or is a row of
+# ellipsis / fill-me tokens rather than a concrete contract or value.
+_SLOT_UNFILLED_BODY_RE = re.compile(r"^\s*(?:\.{2,}|…|x+|n/?a|metric|value|"
+                                    r"number|fill|here|placeholder)?\s*$", re.I)
+
 _MOVE_SIGNALS = [
     ("gap", re.compile(r"\b(however|yet\b|existing|prior (work|approaches)|"
                        r"lack|fail to|remains? (an )?open|no prior|"
@@ -124,6 +162,7 @@ _MOVE_SIGNALS = [
 class Report:
     def __init__(self):
         self.findings = []  # (severity, tag, message)
+        self.open_slots = 0  # unresolved fill-in slots — gates submittability
 
     def add(self, sev, tag, msg):
         self.findings.append((sev, tag, msg))
@@ -179,6 +218,77 @@ def check_self_contained(rep, abstract_tex):
                 % m.group(0))
 
 
+def _result_slot_is_typed(body):
+    """True if a RESULT slot body is a bound typed contract.
+
+    Requires both a numeric magnitude (metric value) and a comparison target,
+    so '[RESULT: +12% Recall@20 vs best hashing baseline]' passes but
+    '[RESULT: ...]' or '[RESULT: outperforms prior work]' does not.
+    """
+    if _SLOT_UNFILLED_BODY_RE.match(body):
+        return False
+    has_magnitude = bool([t for t in _RESULT_MAGNITUDE_RE.findall(body) or [body]
+                          if re.search(r"\d", t)]) \
+        and bool(re.search(r"\d", body))
+    has_compare = bool(_RESULT_COMPARE_RE.search(body))
+    return has_magnitude and has_compare
+
+
+def check_result_slot(rep, abstract_tex):
+    """Enforce the typed quantified-result-slot invariant.
+
+    The quantified result is the single most-predictive surface of an abstract
+    and the one most likely to be deferred while results are pending. This
+    check makes the result->impact arc structurally complete and the open
+    state machine-detectable:
+
+      - every unresolved slot [LABEL: ...] is counted as an open slot; any
+        open slot leaves the abstract DRAFT-not-submittable (hard gate);
+      - results-pending drafts must carry exactly ONE designated quantified-
+        result slot, and it must be a typed contract (metric value + units +
+        sign/direction + comparison target), never bare or free-text prose;
+      - >1 RESULT slot or a CONFIRM/other open slot is flagged so the user
+        binds or removes it before registering/submitting.
+    """
+    slots = list(_SLOT_RE.finditer(abstract_tex))
+    result_slots = [m for m in slots if m.group(1).upper() == "RESULT"]
+    other_slots = [m for m in slots if m.group(1).upper() != "RESULT"]
+
+    rep.open_slots = len(slots)
+
+    if not slots:
+        # No open slot: either results are filled in, or this is not a
+        # results-pending draft. Nothing to enforce here — the moves check
+        # still reports whether a quantified result is present at all.
+        return
+
+    if len(result_slots) > 1:
+        rep.add("RISK", "result-slot", "%d RESULT slots present — an abstract "
+                "carries exactly ONE designated quantified-result slot; merge "
+                "the headline result into one typed slot and move secondary "
+                "numbers to the body" % len(result_slots))
+
+    for m in result_slots:
+        body = m.group(2).strip()
+        if not _result_slot_is_typed(body):
+            rep.add("RISK", "result-slot", "RESULT slot %r is not a bound typed "
+                    "contract — emit it as [RESULT: <value+units>, "
+                    "<sign/direction>, vs <comparison target>] (e.g. "
+                    "'[RESULT: +XX%% Recall@20 vs best hashing baseline under "
+                    "matched budget]'), not bare or free-text prose, so the "
+                    "result->impact arc can score" % ("[RESULT: %s]" % body))
+        else:
+            rep.add("INFO", "result-slot", "RESULT slot is a typed contract but "
+                    "still UNBOUND — fill it with the verified number from the "
+                    "evaluation before registering/submitting; never invent it")
+
+    for m in other_slots:
+        label, body = m.group(1).upper(), m.group(2).strip()
+        rep.add("RISK", "open-slot", "unresolved %s slot %r — bind it with a "
+                "verified value (or delete it) before this abstract is "
+                "submittable" % (label, "[%s: %s]" % (label, body[:60])))
+
+
 def check_sentences(rep, abstract_tex):
     sents = split_sentences(abstract_tex)
     if not sents:
@@ -197,6 +307,7 @@ def check_moves(rep, abstract_tex):
     msg += "detected %s" % (", ".join(hit) if hit else "none")
     if missing:
         msg += "; no signal for %s" % ", ".join(missing)
+    msg += " (motivation is not lexically detectable — check it by reading)"
     rep.add("INFO", "moves", msg)
 
 
@@ -348,6 +459,7 @@ def main(argv=None):
         n_words = len(latex_words(abstract))
         check_length(rep, n_words, limits)
         check_self_contained(rep, abstract)
+        check_result_slot(rep, abstract)
         check_sentences(rep, abstract)
         check_moves(rep, abstract)
 
@@ -383,7 +495,20 @@ def main(argv=None):
     print("\n## Summary\n")
     print("RISK: %d, WARN: %d, INFO: %d"
           % (rep.count("RISK"), rep.count("WARN"), rep.count("INFO")))
+    print("Open slots: %d" % rep.open_slots)
+    if rep.open_slots:
+        print("\n**DRAFT — not submittable**: %d unresolved slot(s) remain. "
+              "Bind every slot with a verified value (the RESULT slot is the "
+              "abstract's most-predictive surface) before registering or "
+              "submitting. This gate hard-fails regardless of --strict."
+              % rep.open_slots)
+    else:
+        print("\nAll slots bound — no open-slot gate blocking submission.")
 
+    # The slot invariant is non-overridable: an abstract with an open slot is
+    # not submittable, so we refuse to exit 0 even without --strict.
+    if rep.open_slots:
+        return 1
     if args.strict and rep.count("RISK"):
         return 1
     return 0

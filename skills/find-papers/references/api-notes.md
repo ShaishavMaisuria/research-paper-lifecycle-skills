@@ -11,8 +11,9 @@ All facts below were verified live on 2026-06-11 unless marked otherwise.
 4. [Semantic Scholar](#semantic-scholar)
 5. [arXiv](#arxiv)
 6. [Fallback matrix](#fallback-matrix)
-7. [Politeness and licensing rails](#politeness-and-licensing-rails)
-8. [Adjacent providers (when the big four are not enough)](#adjacent-providers)
+7. [Canonical-instance resolution (version drift & title collisions)](#canonical-instance-resolution-version-drift--title-collisions)
+8. [Politeness and licensing rails](#politeness-and-licensing-rails)
+9. [Adjacent providers (when the big four are not enough)](#adjacent-providers)
 
 ## Provider comparison
 
@@ -118,12 +119,126 @@ All facts below were verified live on 2026-06-11 unless marked otherwise.
 | Latest preprints | arXiv (sort submittedDate) | S2 (year filter) | — |
 | OA PDF link | S2 `openAccessPdf` | Unpaywall (see `fetch-paper` skill) | arXiv pdf/html |
 
+| Resolve a *named* title to its canonical instance | `resolve_canonical.py` over the candidate `--json` | manual: prefer latest version / highest cites | — |
+
 Notes: ACM has NO public API — DBLP/Crossref carry its metadata, and since
 Jan 1 2026 the whole ACM DL is open access (`dl.acm.org/doi/pdf/<doi>`,
-single fetches only; bulk crawling stays banned by ACM ToU). OpenAlex
-requires an API key since Feb 2026, so it is out of this skill's key-free
-default path (profiles still record `openalex_source` ids for users who
-bring a key).
+single fetches only; bulk crawling stays banned by ACM ToU). OpenAlex still
+answers key-free in the polite `mailto` pool (verified 2026-06) and powers
+the citation-graph recall stage below; profiles also record `openalex_source`
+ids. Its ACM proceedings *venue* mapping stays unreliable
+(`primary_location.source` often null) — keep enumerating venues via DBLP and
+use OpenAlex for edges, not venue lists.
+
+## Graceful failover and provider coverage (`resolve_papers.py`)
+
+The fallback matrix above tells you which provider to *try next*. The failure
+that matrix does not prevent is **silent narrowing**: when DBLP / Semantic
+Scholar / arXiv are rate-limited or unreachable, a single-provider pass (or a
+script that crashes mid-pipeline) collapses the whole result to whichever
+index still answers — usually Crossref or DBLP+Crossref — dropping real,
+relevant papers for *provider* reasons, not relevance, and presenting the thin
+result as if it were exhaustive. `resolve_papers.py` is the provider-agnostic
+orchestrator that closes that gap. The contract it enforces (and that any
+multi-provider flow should follow):
+
+1. **Wrap every index lookup in try/except** — built on `polite_http.http_try`,
+   which raises `ProviderError` instead of exiting. One outage degrades to the
+   others; it never crashes the run and never collapses it silently.
+2. **Fan out across ≥2 independent indexes and UNION the hits** (DBLP +
+   Crossref + Semantic Scholar + arXiv; OpenAlex when a key is present). A
+   result claimed as "complete" needs at least two independent indexes that
+   actually answered.
+3. **Dedupe on ANY stable identifier — a DOI is not required.** arXiv ids,
+   DBLP keys and ACL-Anthology ids are all citable. DOI-less ML-proceedings
+   papers (ICLR/ICML/NeurIPS) and modern EDBT must NOT be discarded for
+   lacking a Crossref DOI. The union merges twins across identifier types
+   (a Crossref DOI record and its arXiv-id twin collapse to one) by stable id,
+   then by normalized title+year.
+4. **Distinguish "no verifiable identifier → drop" from "provider down →
+   retry/fallback."** A clean `0 results` from a healthy provider is real;
+   a `ProviderError` is not a "0 results." Re-query an unresolved candidate on
+   the other indexes; if it still can't be confirmed, flag it
+   `unresolved-keep` rather than dropping it on a single-index miss.
+5. **Emit a per-run provider-coverage report and stamp COMPLETE vs PARTIAL.**
+   The run is `PARTIAL` whenever any authoritative index was degraded or
+   unreachable (or fewer than two answered), so a degraded run is visibly
+   flagged and never reported as exhaustive. `polite_http.note_provider` /
+   `provider_report` / `coverage_status` keep the in-process ledger.
+
+Single-provider scripts keep their old fatal behavior (a direct
+`dblp_search.py` run still exits nonzero on a hard failure via
+`http_get`) — only the orchestrated flow fails over. This is a copilot, not an
+autopilot: it never fabricates a hit to fill a gap, never promises acceptance,
+and flags arXiv-only hits as preprints.
+
+## Citation-graph expansion (`citation_graph.py`)
+
+Keyword/venue search saturates and *structurally* misses three classes of
+paper one citation edge away — foundational/seminal anchors the sub-area is
+built on, direct competitors that share citers but not query keywords, and
+shared-infrastructure deps every paper cites but none names in a topic query.
+They are reachable only by following edges, which is why this is the single
+largest recall lever. `citation_graph.py` does it key-free:
+
+- **OpenAlex** (`api.openalex.org`, CC0): both edge directions plus influence.
+  `referenced_works` (refs-of) + `?filter=cites:<WID>` (cited-by) +
+  `cited_by_count`; resolve seeds by `doi:`/`<WID>`/`arxiv:`/`title.search:`;
+  batch-resolve neighbor ids via `?filter=ids.openalex:a|b|c` (≤50/req). One
+  polite page per call; `meta.count` gives true totals without crawling.
+- **Crossref** references-of fallback: the work's `reference` array carries
+  DOIs (`GET /works/<doi>`, no `select` on the single-work route) — keeps the
+  anchor/infra sweep working key-free even if OpenAlex ever gates the
+  cited-by filter (Crossref has no first-class cites filter, so that direction
+  degrades, not the refs direction).
+
+Re-rank neighbors by **co-citation degree** (how many seeds touch each), run a
+per-cluster foundational-anchor sweep (`--direction refs`, sort by global
+citations), and a claim-driven niche pass (mine the brief's distinctive
+mechanism noun-phrases into narrow queries, feed hits back as seeds). Full
+method: `references/citation-graph-expansion.md`. Neighbors are recall
+*candidates*: confirm venue/acceptance before presenting them and route
+citations through `verify-citations`.
+
+## Canonical-instance resolution (version drift & title collisions)
+
+Every provider ranks a title query by *relevance*, which answers "does a paper
+with this title exist?" — not "is this the instance the community cites?" Two
+recurring traps follow, and both pass a bare existence check:
+
+- **Version / edition drift**: a title has a known successor (V2/V3, `++`,
+  `2.0`, a trailing roman numeral, "revised/extended/revisited", or a
+  year-reissue) and the search returns the *older* edition. The newer
+  canonical version often has *fewer* citations (less time to accrue), so
+  ranking by citations alone picks the wrong one.
+- **Same-author title collision**: two papers share a first-author surname and
+  a near-duplicate title stem (a workshop paper vs. its journal extension; a
+  short vs. long version; an adjacent follow-up). The relevance winner may be
+  the lower-impact or non-seminal one.
+
+`scripts/resolve_canonical.py` post-processes the candidate list (the `--json`
+of any search script — it fetches nothing) and applies three GENERIC,
+domain-agnostic heuristics; it hardcodes no venue, author, or paper:
+
+1. **prefer-latest-canonical** — if any cluster member carries an explicit
+   version marker (regex over general version tokens + edition words), the
+   newest such version is PREFERRED and older siblings are flagged.
+2. **title-collision clustering** — records are grouped when their title stems
+   (content words, stop-worded, version-stripped, order-independent) collide
+   *and* they share a first-author surname. The shared-author guard lets the
+   stem-overlap bar relax (Jaccard 0.45, or ≥2 distinctive shared words) so
+   genuine near-duplicates surface without over-merging unrelated same-author
+   work (distinct topics stay separate).
+3. **de-duplication by impact** — within an ambiguous cluster, rank by impact
+   signal (`citationCount` / `is-referenced-by-count`), then earliest year as
+   a seminal-venue proxy when impact is tied or absent (e.g. DBLP records,
+   which carry no citation counts).
+
+It is a **copilot**: every ambiguous cluster prints `PREFERRED` + `sibling`
+lines and a one-line `CHOOSE:` note, never auto-collapsing to one. The picked
+instance still goes through `verify-citations` before any bibliography. The
+heuristics are tunable in one place (the vocab/threshold constants at the top
+of the script) without touching the search scripts.
 
 ## Politeness and licensing rails
 

@@ -26,7 +26,9 @@ Rules the gate (`scripts/check_review.py`) enforces:
 - every cited key is `verified` (Phase 6) → unverified = FAIL
 - no citation of `excluded` papers → FAIL
 - no `[CITATION NEEDED]` / `[@TODO]` / `??` placeholders → FAIL
-- no verbatim quote over 40 words → FAIL
+- no verbatim quote over 40 words (even wrapped across lines) → FAIL —
+  the guard only detects quotation-marked spans, so unmarked transcription
+  is a copyright violation the gate cannot catch; paraphrase regardless
 - included+extracted papers should all be cited → WARN (`--strict` to FAIL)
 
 ## Choosing themes

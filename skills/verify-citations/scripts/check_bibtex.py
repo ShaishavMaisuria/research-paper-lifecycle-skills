@@ -10,6 +10,20 @@ and validates every entry against live scholarly indexes:
   - DBLP       (title resolution for CS papers without a DOI)
   - Semantic Scholar (last-resort title match; optional S2_API_KEY)
 
+A resolving identifier is necessary but NOT sufficient: an entry can resolve
+to the wrong *instance* of a named work (e.g. a later RFC/tech-report instead
+of the venue paper the field actually cites), and a freshly added reference
+can resolve perfectly yet be off-topic for the paper. Two extra, strictly
+non-fabricating heuristics address that (see --thesis-file / --core-key):
+
+  - canonical-instance check: when a resolved title also exists as another
+    real artifact in the indexes (RFC vs conference paper, preprint vs
+    published, tech-report vs journal), surface the alternatives WITH their
+    citation counts so the author cites the artifact the field cites.
+  - relevance gate: score each entry's topical fit (lexical overlap with the
+    paper's thesis + co-citation density with a confirmed core set) and flag
+    low-fit additions for human review — never auto-remove.
+
 Flags raised:
   ERROR : UNRESOLVED (possible fabrication), DOI_NOT_FOUND, ARXIV_NOT_FOUND,
           TITLE_MISMATCH, AUTHOR_MISMATCH, YEAR_MISMATCH, RETRACTED,
@@ -17,8 +31,10 @@ Flags raised:
           MALFORMED_ARXIV_ID
   WARN  : TITLE_PARTIAL_MATCH, AUTHOR_LIST_DIFFERS, VENUE_MISMATCH,
           MISSING_DOI, MISSING_FIELDS, EXPRESSION_OF_CONCERN,
-          NOT_IN_INDEXES, IMPLAUSIBLE_YEAR, POSSIBLE_ID_TYPO
-  INFO  : UNVERIFIABLE_TYPE, HAS_CORRECTION, RESOLVED_VIA_SEARCH
+          NOT_IN_INDEXES, IMPLAUSIBLE_YEAR, POSSIBLE_ID_TYPO,
+          CANONICAL_INSTANCE, LOW_RELEVANCE
+  INFO  : UNVERIFIABLE_TYPE, HAS_CORRECTION, RESOLVED_VIA_SEARCH,
+          RELEVANCE_OK, CHECK_SKIPPED
 
 Politeness: <=1 request/second per host (3 s for arXiv, per their etiquette),
 User-Agent "research-paper-skills (mailto:$CONTACT_EMAIL)", exponential
@@ -26,7 +42,10 @@ backoff on HTTP 429, responses cached under .cache/verify-citations/
 (gitignored), single-item fetches only — never bulk.
 
 Exit codes: 0 = no errors found; 2 = problems found (see report);
-1 = operational failure (bad file, network down, missing CONTACT_EMAIL).
+1 = operational failure (bad file, missing CONTACT_EMAIL). A *single* index
+being unreachable no longer aborts the run: the check it powers is recorded
+as skipped and the overall verdict downgrades from PASS to PARTIAL-PASS so
+the caller never mistakes "could not check" for "checked and clean".
 
 Usage:
   export CONTACT_EMAIL=you@university.edu
@@ -34,6 +53,9 @@ Usage:
   python3 scripts/check_bibtex.py refs.bib --offline          # parse + static checks only
   python3 scripts/check_bibtex.py refs.bib --key smith2024    # check one entry
   python3 scripts/check_bibtex.py refs.bib --json report.json # machine-readable report
+  python3 scripts/check_bibtex.py refs.bib \
+      --thesis-file thesis.txt --core-key dean2008 --core-key vaswani2017
+                                                  # relevance-gate added refs
 """
 from __future__ import annotations
 
@@ -81,6 +103,48 @@ RETRACTION_TYPES = {"retraction", "retraction_and_replacement", "withdrawal", "r
 def fail(msg: str, code: int = 1):
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(code)
+
+
+# --------------------------------------------------------------------------
+# partial-pass tracking — which authoritative indexes went unreachable
+# --------------------------------------------------------------------------
+# A run that could not reach an index has NOT verified the things that index
+# is authoritative for. We record those gaps instead of silently passing, so
+# the overall verdict can downgrade PASS -> PARTIAL-PASS and name what did
+# not run. Populated by http_get's soft-fail path (see SOFT_FAIL).
+UNREACHABLE_HOSTS: set[str] = set()
+
+# Human-readable description of what each index settles, for the gap report.
+HOST_CHECKS = {
+    "api.crossref.org": "DOI resolution, metadata & retraction checks (Crossref)",
+    "api.datacite.org": "non-Crossref DOI resolution (DataCite)",
+    "export.arxiv.org": "arXiv eprint resolution",
+    "dblp.org": "CS venue/title resolution (DBLP)",
+    "api.semanticscholar.org": "title fallback, citation counts & co-citation (Semantic Scholar)",
+}
+
+# Default on: a host that keeps erroring is recorded as unreachable and the
+# dependent lookup returns SOFT_FAIL rather than aborting the whole run; the
+# verdict downgrades to PARTIAL-PASS. --no-soft-fail restores hard abort.
+# Hard operational failures (bad file, missing CONTACT_EMAIL) still exit 1.
+SOFT_FAIL = True
+
+# Whether the canonical-instance check runs (one extra same-title lookup per
+# resolved entry). On by default; disabled with --no-canonical-instance.
+CANONICAL_INSTANCE_ON = True
+
+
+class _SoftFail:
+    """Sentinel distinct from None. http_get returns this when a host was
+    unreachable, so callers can tell 'index said no' (None) apart from
+    'index could not be asked' (SOFT_FAIL) and avoid emitting a false
+    UNRESOLVED."""
+    __slots__ = ()
+    def __repr__(self):
+        return "<SOFT_FAIL>"
+
+
+SOFT_FAIL_RESULT = _SoftFail()
 
 
 # --------------------------------------------------------------------------
@@ -218,11 +282,22 @@ def http_get(url, *, min_interval=1.0, headers=None, ttl=None,
                 time.sleep(delay)
                 delay *= 2
                 continue
-    fail(f"gave up after {MAX_RETRIES} attempts talking to {host}"
-         + (f" (last error: {last_err})" if last_err else " (persistent HTTP 429)")
-         + ". Wait a minute and retry, or rerun with --offline. For "
-         "api.semanticscholar.org, a free key via S2_API_KEY gives a dedicated "
-         "1 req/s allowance.")
+    gave_up = (f"gave up after {MAX_RETRIES} attempts talking to {host}"
+               + (f" (last error: {last_err})" if last_err
+                  else " (persistent HTTP 429)")
+               + ". Wait a minute and retry, or rerun with --offline. For "
+               "api.semanticscholar.org, a free key via S2_API_KEY gives a "
+               "dedicated 1 req/s allowance.")
+    if SOFT_FAIL:
+        # Do NOT abort the whole run for one flaky index. Record the gap so
+        # the verdict downgrades to PARTIAL-PASS and report it once per host.
+        if host not in UNREACHABLE_HOSTS:
+            UNREACHABLE_HOSTS.add(host)
+            print(f"  WARNING: {host} unreachable — {gave_up} Continuing; "
+                  "checks that need this index are marked SKIPPED and the "
+                  "verdict will be PARTIAL-PASS.", file=sys.stderr)
+        return SOFT_FAIL_RESULT
+    fail(gave_up)
     raise AssertionError("unreachable")
 
 
@@ -532,6 +607,8 @@ def crossref_doi(doi: str):
            + urllib.parse.quote(doi, safe="")
            + "?mailto=" + urllib.parse.quote(contact_email()))
     body = http_get(url, none_on=(404,))
+    if body is SOFT_FAIL_RESULT:
+        return SOFT_FAIL_RESULT
     if body is None:
         return None
     try:
@@ -558,12 +635,16 @@ def crossref_doi(doi: str):
     return {"source": "Crossref", "title": title, "families": fams,
             "year": year, "venue": container[0] if container else "",
             "doi": msg.get("DOI", doi),
-            "url": f"https://doi.org/{msg.get('DOI', doi)}"}
+            "url": f"https://doi.org/{msg.get('DOI', doi)}",
+            "type": (msg.get("type") or ""),
+            "cited_by": msg.get("is-referenced-by-count")}
 
 
 def datacite_doi(doi: str):
     url = "https://api.datacite.org/dois/" + urllib.parse.quote(doi, safe="")
     body = http_get(url, none_on=(404,))
+    if body is SOFT_FAIL_RESULT:
+        return SOFT_FAIL_RESULT
     if body is None:
         return None
     try:
@@ -587,6 +668,8 @@ def arxiv_by_id(aid: str):
     url = ("https://export.arxiv.org/api/query?id_list="
            + urllib.parse.quote(aid) + "&max_results=1")
     body = http_get(url, min_interval=3.0)  # arXiv etiquette: 3 s between calls
+    if body is SOFT_FAIL_RESULT:
+        return SOFT_FAIL_RESULT
     if body is None:
         return None
     try:
@@ -621,6 +704,8 @@ def dblp_title_search(title: str, year=None):
     url = ("https://dblp.org/search/publ/api?format=json&h=10&q="
            + urllib.parse.quote(q))
     body = http_get(url)
+    if body is SOFT_FAIL_RESULT:
+        return SOFT_FAIL_RESULT
     if body is None:
         return None
     try:
@@ -666,6 +751,8 @@ def crossref_title_search(title: str):
            "&query.bibliographic=" + urllib.parse.quote(q)
            + "&mailto=" + urllib.parse.quote(contact_email()))
     body = http_get(url)
+    if body is SOFT_FAIL_RESULT:
+        return SOFT_FAIL_RESULT
     if body is None:
         return None
     try:
@@ -694,6 +781,8 @@ def s2_title_match(title: str):
     if os.environ.get("S2_API_KEY"):
         headers["x-api-key"] = os.environ["S2_API_KEY"]
     body = http_get(url, headers=headers, none_on=(404,))  # 404 = no match
+    if body is SOFT_FAIL_RESULT:
+        return SOFT_FAIL_RESULT
     if body is None:
         return None
     try:
@@ -718,6 +807,51 @@ def s2_title_match(title: str):
             "url": ("https://doi.org/" + ext["DOI"]) if ext.get("DOI") else ""}
 
 
+def s2_title_instances(title: str, limit: int = 8):
+    """Return a list of candidate records for `title` WITH citation counts and
+    artifact type, for the canonical-instance check. Strictly read-only — we
+    only report what the index returns, never synthesize a paper.
+
+    Each record: {title, year, venue, doi, url, cited_by, ptypes:[...]}.
+    Returns [] on no match, SOFT_FAIL_RESULT if S2 was unreachable."""
+    q = norm_text(title)
+    if not q:
+        return []
+    url = ("https://api.semanticscholar.org/graph/v1/paper/search"
+           "?limit=" + str(limit) +
+           "&fields=title,year,venue,externalIds,citationCount,publicationTypes"
+           "&query=" + urllib.parse.quote(q))
+    headers = {}
+    if os.environ.get("S2_API_KEY"):
+        headers["x-api-key"] = os.environ["S2_API_KEY"]
+    body = http_get(url, headers=headers, none_on=(404,))
+    if body is SOFT_FAIL_RESULT:
+        return SOFT_FAIL_RESULT
+    if body is None:
+        return []
+    try:
+        data = json.loads(body).get("data", []) or []
+    except ValueError:
+        return []
+    out = []
+    for p in data:
+        if similarity(q, norm_text(p.get("title", ""))) < 0.85:
+            continue  # a different paper that merely shares words
+        ext = p.get("externalIds") or {}
+        out.append({
+            "title": p.get("title", ""),
+            "year": p.get("year"),
+            "venue": p.get("venue", "") or "",
+            "doi": clean_doi(ext["DOI"]) if ext.get("DOI") else None,
+            "url": (("https://doi.org/" + ext["DOI"]) if ext.get("DOI")
+                    else (("https://arxiv.org/abs/" + ext["ArXiv"])
+                          if ext.get("ArXiv") else "")),
+            "cited_by": p.get("citationCount"),
+            "ptypes": [t for t in (p.get("publicationTypes") or []) if t],
+        })
+    return out
+
+
 def crossref_retraction_check(doi: str):
     """Return list of (severity, code, message) for editorial updates
     (retractions, expressions of concern, corrections) targeting this DOI."""
@@ -726,7 +860,10 @@ def crossref_retraction_check(doi: str):
            "&filter=" + urllib.parse.quote(f"updates:{doi}")
            + "&mailto=" + urllib.parse.quote(contact_email()))
     body = http_get(url, none_on=(400, 404))
-    if body is None:
+    if body is SOFT_FAIL_RESULT or body is None:
+        # Crossref unreachable (already recorded in UNREACHABLE_HOSTS) or no
+        # update record. Either way: no retraction *found*, not "no
+        # retraction exists". The partial-pass report names the gap.
         return []
     try:
         items = json.loads(body)["message"].get("items", [])
@@ -896,8 +1033,176 @@ def compare_with_source(entry: dict, src: dict):
     return flags
 
 
+def crossref_reference_dois(doi: str):
+    """Return the set of DOIs this work cites (its reference list), per
+    Crossref. Used for co-citation density in the relevance gate. Read-only.
+    [] when none/unavailable, SOFT_FAIL_RESULT when Crossref is unreachable."""
+    if not doi:
+        return set()
+    url = ("https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="")
+           + "?select=reference&mailto=" + urllib.parse.quote(contact_email()))
+    body = http_get(url, none_on=(404,))
+    if body is SOFT_FAIL_RESULT:
+        return SOFT_FAIL_RESULT
+    if body is None:
+        return set()
+    try:
+        refs = json.loads(body)["message"].get("reference", []) or []
+    except (ValueError, KeyError):
+        return set()
+    out = set()
+    for r in refs:
+        d = r.get("DOI")
+        if d:
+            out.add(clean_doi(d).lower())
+    return out
+
+
+def lexical_overlap(text_a: str, text_b: str) -> float:
+    """Jaccard overlap of content words (length>3) between two strings, after
+    LaTeX-aware normalization. A transparent, dependency-free proxy for topical
+    similarity; the SKILL tells the agent to prefer abstract-embedding
+    similarity when an embedding model is available."""
+    sa = {t for t in norm_text(text_a).split() if len(t) > 3}
+    sb = {t for t in norm_text(text_b).split() if len(t) > 3}
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
+
+
+def _venue_class(venue: str, ptypes) -> str:
+    """Coarse, venue-agnostic bucket for an artifact, from its venue string
+    and Semantic Scholar publicationTypes. Used only to decide whether two
+    same-titled records are *different kinds of artifact* (so we can surface
+    the alternative); never hardcodes a specific venue or standards body."""
+    v = norm_text(venue)
+    pt = {str(t).lower() for t in (ptypes or [])}
+    # Standards / RFC / tech-report / working-draft family.
+    if (re.search(r"\b(rfc|request for comments|internet draft|"
+                  r"working draft|tech(nical)? report|memo(randum)?|"
+                  r"standard|specification|recommendation)\b", v)
+            or "technicalreport" in pt or "standard" in pt):
+        return "standard/report"
+    if "conference" in pt or re.search(
+            r"\b(proc(eedings)?|conf(erence)?|symposium|workshop|"
+            r"meeting|congress)\b", v):
+        return "conference"
+    if "journalarticle" in pt or re.search(
+            r"\b(journal|transactions|trans|letters|review)\b", v):
+        return "journal"
+    if "book" in pt or re.search(r"\b(book|chapter|press)\b", v):
+        return "book"
+    if not v or re.search(r"\b(arxiv|preprint|corr|biorxiv|ssrn|repository)\b", v) \
+            or {"preprint"} & pt:
+        return "preprint"
+    return "other"
+
+
+def canonical_instance_check(entry: dict, src: dict):
+    """WARN when the *named work* exists as more than one real artifact and a
+    DIFFERENT instance is the one the field predominantly cites.
+
+    Resolution proves an identifier points at *a* real record; it does not
+    prove it is the instance the community cites (e.g. a later standards/RFC
+    record vs the original conference paper, or a preprint vs the published
+    version). We surface the alternatives WITH citation counts so the author
+    picks the canonical one. Strictly non-fabricating: every alternative
+    shown is a record an index returned. Generic — no venue is hardcoded."""
+    flags = []
+    title = entry["fields"].get("title", "")
+    if not norm_text(title) or len(norm_text(title)) < 15:
+        return flags  # too short to disambiguate reliably (see triage-guide)
+
+    instances = s2_title_instances(title)
+    if instances is SOFT_FAIL_RESULT or not instances:
+        return flags  # unreachable handled by partial-pass; nothing to compare
+
+    cur_doi = (src.get("doi") or "").lower()
+    cur_class = _venue_class(src.get("venue", ""), [src.get("type", "")])
+
+    # The instance the entry currently points at (match on DOI; else class).
+    def is_current(ins):
+        if cur_doi and ins.get("doi"):
+            return ins["doi"].lower() == cur_doi
+        return _venue_class(ins.get("venue", ""), ins.get("ptypes")) == cur_class
+
+    cur = next((i for i in instances if is_current(i)), None)
+    cur_cites = (cur or {}).get("cited_by")
+    if cur_cites is None:
+        cur_cites = src.get("cited_by")
+
+    # Distinct alternatives: a different artifact kind, or a clearly different
+    # DOI — not merely the same record returned twice.
+    alts = []
+    seen_classes = set()
+    for ins in instances:
+        if is_current(ins):
+            continue
+        kls = _venue_class(ins.get("venue", ""), ins.get("ptypes"))
+        same_doi = cur_doi and ins.get("doi") and ins["doi"].lower() == cur_doi
+        if same_doi:
+            continue
+        sig = (kls, ins.get("doi") or ins.get("venue") or kls)
+        if sig in seen_classes:
+            continue
+        seen_classes.add(sig)
+        alts.append(ins)
+
+    if not alts:
+        return flags
+
+    # Rank alternatives by citation count (None sorts last).
+    alts.sort(key=lambda i: (i.get("cited_by") or -1), reverse=True)
+    top = alts[0]
+    top_cites = top.get("cited_by")
+
+    # Only warn when an alternative is *materially* more cited than the cited
+    # instance — that is the signal the field cites the other artifact. If we
+    # lack counts, still surface the alternatives as INFO so the author looks.
+    def _fmt(ins):
+        c = ins.get("cited_by")
+        cstr = f"{c} citations" if isinstance(c, int) else "citation count n/a"
+        kls = _venue_class(ins.get("venue", ""), ins.get("ptypes"))
+        loc = ins.get("url") or ins.get("doi") or ins.get("venue") or "?"
+        yr = f", {ins['year']}" if ins.get("year") else ""
+        return f"{kls} [{ins.get('venue') or 'n/a'}{yr}; {cstr}]: {loc}"
+
+    listing = "; ".join(_fmt(a) for a in alts[:3])
+    if (isinstance(top_cites, int) and isinstance(cur_cites, int)
+            and top_cites >= max(25, 3 * (cur_cites + 1))):
+        flags.append(("WARN", "CANONICAL_INSTANCE",
+                      f"this title also exists as a more-cited artifact the "
+                      f"field may prefer — cited instance has ~{cur_cites} "
+                      f"citations, alternative(s): {listing}. Confirm you are "
+                      "citing the instance your readers cite (see "
+                      "references/triage-guide.md#canonical_instance)."))
+    elif top_cites is None or cur_cites is None:
+        flags.append(("INFO", "CANONICAL_INSTANCE",
+                      f"this title exists as multiple artifacts; citation "
+                      f"counts unavailable to rank them: {listing}. Verify you "
+                      "cite the instance the field cites."))
+    return flags
+
+
+def first_hit(*providers):
+    """Call each zero-arg provider in order. Return the first real record
+    (a dict). If none resolved but at least one provider SOFT-failed (its
+    index was unreachable), return SOFT_FAIL_RESULT so the caller does not
+    mistake 'could not ask' for 'does not exist'. Otherwise None."""
+    soft = False
+    for p in providers:
+        r = p()
+        if isinstance(r, dict):
+            return r
+        if r is SOFT_FAIL_RESULT:
+            soft = True
+    return SOFT_FAIL_RESULT if soft else None
+
+
 def verify_online(entry: dict, check_retractions: bool):
-    """Resolve the entry against live indexes. Returns (src|None, flags)."""
+    """Resolve the entry against live indexes. Returns (src|None, flags).
+    `src` may be SOFT_FAIL_RESULT when every index that could resolve this
+    entry was unreachable — distinct from a genuine UNRESOLVED."""
     fields = entry["fields"]
     flags = []
     doi = extract_doi(fields)
@@ -910,40 +1215,44 @@ def verify_online(entry: dict, check_retractions: bool):
         if m:  # arXiv DataCite DOI — arXiv API is the authority
             aid = aid or m.group(1)
         else:
-            src = crossref_doi(doi)
-            if src is None:
-                src = datacite_doi(doi)
-            if src is None:
+            src = first_hit(lambda: crossref_doi(doi),
+                            lambda: datacite_doi(doi))
+            if src is None:  # both said 404 (not unreachable)
                 flags.append(("ERROR", "DOI_NOT_FOUND",
                               f"DOI {doi} resolves in neither Crossref nor "
                               "DataCite — fabricated or mistyped"))
 
-    if src is None and aid and valid_arxiv_id(aid):
+    if (src is None or src is SOFT_FAIL_RESULT) and aid and valid_arxiv_id(aid):
         if looks_like_preprint(fields) or not title:
-            src = arxiv_by_id(aid)
-            if src is None:
+            arx = arxiv_by_id(aid)
+            if isinstance(arx, dict):
+                src = arx
+            elif arx is SOFT_FAIL_RESULT:
+                src = SOFT_FAIL_RESULT
+            else:
+                src = None
                 flags.append(("ERROR", "ARXIV_NOT_FOUND",
                               f"arXiv ID {aid} not found on arXiv — "
                               "fabricated or mistyped"))
         else:
             # cites the published version; prefer venue-bearing indexes
-            src = (dblp_title_search(title, bib_year(fields))
-                   or crossref_title_search(title)
-                   or arxiv_by_id(aid))
+            src = first_hit(lambda: dblp_title_search(title, bib_year(fields)),
+                            lambda: crossref_title_search(title),
+                            lambda: arxiv_by_id(aid))
 
     id_failed = any(c in ("DOI_NOT_FOUND", "ARXIV_NOT_FOUND")
                     for _, c, _ in flags)
-    if src is None and title and (not flags or id_failed):
-        src = (dblp_title_search(title, bib_year(fields))
-               or crossref_title_search(title)
-               or s2_title_match(title))
-        if src and id_failed:
+    if (src is None or src is SOFT_FAIL_RESULT) and title and (not flags or id_failed):
+        src = first_hit(lambda: dblp_title_search(title, bib_year(fields)),
+                        lambda: crossref_title_search(title),
+                        lambda: s2_title_match(title))
+        if isinstance(src, dict) and id_failed:
             hint = f" (correct DOI: {src['doi']})" if src.get("doi") else ""
             flags.append(("WARN", "POSSIBLE_ID_TYPO",
                           f"a paper with this title does exist in "
                           f"{src['source']}: {src['url']}{hint} — replace the "
                           "bad identifier with the canonical one"))
-        elif src:
+        elif isinstance(src, dict):
             flags.append(("INFO", "RESOLVED_VIA_SEARCH",
                           f"matched by title in {src['source']}: {src['url']}"))
             if src.get("doi") and not doi:
@@ -951,7 +1260,16 @@ def verify_online(entry: dict, check_retractions: bool):
                               f"add doi = {{{src['doi']}}} so the entry is "
                               "unambiguous"))
 
-    if src is None and not flags:
+    if src is SOFT_FAIL_RESULT:
+        # Every index that could resolve this entry was unreachable. Do NOT
+        # emit UNRESOLVED — that would brand an unchecked entry as a possible
+        # fabrication. Record a skipped-check note; the run is PARTIAL-PASS.
+        flags.append(("INFO", "CHECK_SKIPPED",
+                      "could not resolve: every index that covers this entry "
+                      "was unreachable this run (see PARTIAL-PASS gaps). "
+                      "Re-run when connectivity returns before trusting it."))
+        src = None
+    elif src is None and not flags:
         if entry["type"] in SOFT_TYPES:
             flags.append(("WARN", "NOT_IN_INDEXES",
                           f"@{entry['type']} not found in Crossref/DBLP/"
@@ -963,18 +1281,106 @@ def verify_online(entry: dict, check_retractions: bool):
                           "arXiv — possible fabricated/hallucinated citation. "
                           "Verify by hand before keeping it."))
 
-    if src is not None:
+    if isinstance(src, dict):
         flags.extend(compare_with_source(entry, src))
+        if CANONICAL_INSTANCE_ON:
+            flags.extend(canonical_instance_check(entry, src))
         check_doi = src.get("doi") or (doi if doi and DOI_RE.match(doi) else None)
         if (check_retractions and check_doi
                 and src["source"] in ("Crossref", "DBLP", "Semantic Scholar")):
             flags.extend(crossref_retraction_check(check_doi))
-    return src, flags
+    return (src if isinstance(src, dict) else None), flags
 
 
 # --------------------------------------------------------------------------
 # reporting
 # --------------------------------------------------------------------------
+
+def relevance_gate(entries, srcs, thesis_text, core_keys):
+    """Score topical fit of each non-core, resolved entry and flag low-fit
+    additions for HUMAN REVIEW (never auto-remove). Returns {idx: [flags]}.
+
+    Two non-fabricating signals, combined:
+      1. lexical overlap of the entry's title+venue with the paper thesis
+         (a transparent proxy; the SKILL tells the agent to substitute
+         abstract-embedding similarity when a model is available);
+      2. co-citation density — fraction of the confirmed *core* references
+         whose reference lists also cite this entry (or vice versa). A
+         reference the core set co-cites is topically anchored; one that
+         shares no citation neighborhood is a candidate off-topic addition.
+
+    Opt-in: only runs when a thesis and/or a core set is supplied. Generic —
+    no venue or paper is hardcoded; thresholds are tunable below."""
+    out = {}
+    have_thesis = bool(norm_text(thesis_text))
+    core_set = set(core_keys or [])
+
+    # Build the core set's outgoing-reference DOIs once (co-citation backbone).
+    core_ref_dois = set()
+    cocite_unreachable = False
+    if core_set:
+        for idx, e in enumerate(entries):
+            if e["key"] not in core_set:
+                continue
+            src = srcs.get(idx)
+            doi = (src or {}).get("doi") if src else extract_doi(e["fields"])
+            if not doi:
+                continue
+            refs = crossref_reference_dois(doi)
+            if refs is SOFT_FAIL_RESULT:
+                cocite_unreachable = True
+                continue
+            core_ref_dois |= refs
+
+    LEX_LOW = 0.04     # below this lexical overlap -> low topical fit
+    LEX_OK = 0.10      # at/above this -> clearly on-topic
+    for idx, e in enumerate(entries):
+        key = e["key"]
+        src = srcs.get(idx)
+        if key in core_set or not isinstance(src, dict):
+            continue  # core set is the reference frame; skip unresolved
+        signals = []
+        score_known = False
+
+        lex = None
+        if have_thesis:
+            blob = (e["fields"].get("title", "") + " "
+                    + bib_venue(e["fields"]) + " " + e["fields"].get("keywords", ""))
+            lex = lexical_overlap(thesis_text, blob)
+            score_known = True
+            signals.append(f"thesis lexical overlap {lex:.2f}")
+
+        cocited = None
+        entry_doi = (src.get("doi") or extract_doi(e["fields"]) or "").lower()
+        if core_ref_dois and entry_doi:
+            cocited = entry_doi in core_ref_dois
+            score_known = True
+            signals.append("co-cited by core set" if cocited
+                           else "NOT co-cited by core set")
+
+        if not score_known:
+            continue  # nothing to score this entry on
+
+        detail = "; ".join(signals)
+        low_lex = lex is not None and lex < LEX_LOW
+        ok_lex = lex is not None and lex >= LEX_OK
+        # Co-citation is corroborating, not decisive: presence rescues a
+        # low-lexical entry; absence alone never condemns one.
+        if low_lex and not cocited:
+            out.setdefault(idx, []).append(
+                ("WARN", "LOW_RELEVANCE",
+                 f"low topical fit to the paper's thesis ({detail}) — verify "
+                 "this addition is load-bearing for your argument, not an "
+                 "off-topic citation. Human review required; do not remove "
+                 "automatically. See references/relevance-gate.md."))
+        elif ok_lex or cocited:
+            out.setdefault(idx, []).append(
+                ("INFO", "RELEVANCE_OK",
+                 f"topical fit looks adequate ({detail})."))
+    if cocite_unreachable:
+        UNREACHABLE_HOSTS.add("api.crossref.org")
+    return out
+
 
 def entry_status(flags, online: bool, entry_type: str):
     codes = {c for _, c, _ in flags}
@@ -987,7 +1393,9 @@ def entry_status(flags, online: bool, entry_type: str):
         return "MISMATCH"
     if not online:
         return "PARSED_ONLY"
-    if "UNVERIFIABLE_TYPE" in codes or "NOT_IN_INDEXES" in codes:
+    if {"UNVERIFIABLE_TYPE", "NOT_IN_INDEXES", "CHECK_SKIPPED"} & codes:
+        # CHECK_SKIPPED: an index was unreachable and the entry never resolved —
+        # it is NOT verified, even with no other flags. Do not read "VERIFIED".
         return "UNVERIFIED"
     warns = [c for s, c, _ in flags if s == "WARN"]
     return "VERIFIED*" if warns else "VERIFIED"
@@ -1019,7 +1427,25 @@ def main():
                     help="exit 2 on warnings too, not just errors")
     ap.add_argument("--refresh", action="store_true",
                     help="bypass the response cache under .cache/")
+    ap.add_argument("--thesis-file", metavar="PATH",
+                    help="plain-text thesis/abstract of the paper; enables the "
+                    "relevance gate (flags low-topical-fit additions for "
+                    "human review). Pair with --core-key for co-citation.")
+    ap.add_argument("--core-key", action="append", default=[], metavar="KEY",
+                    help="a citation key you have confirmed is core to the "
+                    "paper (repeatable); the relevance gate scores other "
+                    "entries' co-citation density against this set.")
+    ap.add_argument("--no-canonical-instance", action="store_true",
+                    help="skip the canonical-instance check (the extra "
+                    "same-title lookup that flags wrong-artifact citations)")
+    ap.add_argument("--no-soft-fail", action="store_true",
+                    help="abort (exit 1) the moment any index is unreachable, "
+                    "instead of degrading to a PARTIAL-PASS verdict")
     args = ap.parse_args()
+
+    global SOFT_FAIL, CANONICAL_INSTANCE_ON
+    SOFT_FAIL = not args.no_soft_fail
+    CANONICAL_INSTANCE_ON = not args.no_canonical_instance
 
     try:
         with open(args.bibfile, "r", encoding="utf-8", errors="replace") as f:
@@ -1044,11 +1470,27 @@ def main():
         if unknown:
             fail("key(s) not found in file: " + ", ".join(sorted(unknown)))
 
+    if args.core_key:
+        unknown = set(args.core_key) - {e["key"] for e in entries}
+        if unknown:
+            fail("--core-key(s) not found in file: " + ", ".join(sorted(unknown)))
+
+    thesis_text = ""
+    if args.thesis_file:
+        try:
+            with open(args.thesis_file, "r", encoding="utf-8",
+                      errors="replace") as f:
+                thesis_text = f.read()
+        except OSError as e:
+            fail(f"cannot read --thesis-file {args.thesis_file}: {e}")
+
     if not args.offline:
         contact_email()  # resolve early so the failure is up front
 
     dup_flags = duplicate_checks(entries)
     results = []
+    srcs = {}            # idx (0-based) -> resolved source dict, for the gate
+    entry_flags = {}     # idx (0-based) -> mutable flag list
     online_done = 0
     total = len(entries)
     print(f"verify-citations — {args.bibfile} ({total} entries, "
@@ -1074,6 +1516,25 @@ def main():
                 online_done += 1
 
         flags = list(dict.fromkeys(flags))  # dedupe identical flags
+        if src:
+            srcs[idx - 1] = src
+        entry_flags[idx - 1] = flags
+
+    # Relevance gate (opt-in): needs the resolved sources, so it runs after the
+    # main pass. Flags low-topical-fit additions for human review; never auto-
+    # removes. No-op unless --thesis-file or --core-key was supplied.
+    rel_flags = {}
+    if not args.offline and (thesis_text or args.core_key):
+        rel_flags = relevance_gate(entries, srcs, thesis_text, args.core_key)
+        for i, fl in rel_flags.items():
+            entry_flags[i] = list(dict.fromkeys(entry_flags.get(i, []) + fl))
+
+    sel_keys = set(args.key)
+    for idx, entry in enumerate(entries, 1):
+        key = entry["key"]
+        flags = entry_flags[idx - 1]
+        src = srcs.get(idx - 1)
+        do_online = not args.offline and ((not args.key) or (key in sel_keys))
         status = entry_status(flags, do_online, entry["type"])
         via = f" via {src['source']} ({src['url']})" if src else ""
         print(f"[{idx}/{total}] {key} (@{entry['type']}, line {entry['line']})"
@@ -1096,24 +1557,71 @@ def main():
     n_unresolved = sum(1 for r in results if r["status"] == "UNRESOLVED")
     n_verified = sum(1 for r in results
                      if r["status"] in ("VERIFIED", "VERIFIED*"))
+    n_instance = sum(1 for r in results
+                     if any(f["code"] == "CANONICAL_INSTANCE" for f in r["flags"]))
+    n_lowrel = sum(1 for r in results
+                   if any(f["code"] == "LOW_RELEVANCE" for f in r["flags"]))
+    n_skipped = sum(1 for r in results
+                    if any(f["code"] == "CHECK_SKIPPED" for f in r["flags"]))
 
     print(f"\nSummary: {total} entries — {n_verified} verified, "
           f"{n_err} with errors ({n_unresolved} unresolved, "
           f"{n_retracted} retracted), {n_warn} with warnings only.")
+    if n_instance:
+        print(f"  {n_instance} entr{'y' if n_instance == 1 else 'ies'} may cite "
+              "a non-canonical artifact (CANONICAL_INSTANCE) — confirm you are "
+              "citing the instance the field cites.")
+    if n_lowrel:
+        print(f"  {n_lowrel} added entr{'y' if n_lowrel == 1 else 'ies'} scored "
+              "low topical fit (LOW_RELEVANCE) — flagged for human review, NOT "
+              "removed automatically.")
     if n_err:
         print("Entries with ERROR flags must be fixed or removed before "
               "submission. Never invent a replacement citation: fix from the "
               "canonical record (see references/triage-guide.md).")
 
+    # ---- overall verdict: PASS vs PARTIAL-PASS vs FAIL --------------------
+    # A run that could not reach an authoritative index has NOT confirmed what
+    # that index settles; reporting PASS would be a false clean bill. Downgrade
+    # to PARTIAL-PASS and name the gaps so the caller re-runs them.
+    gaps = []
+    for host in sorted(UNREACHABLE_HOSTS):
+        gaps.append(HOST_CHECKS.get(host, host))
+    if n_err:
+        verdict = "FAIL"
+    elif gaps or n_skipped:
+        verdict = "PARTIAL-PASS"
+    else:
+        verdict = "PASS"
+
+    print(f"\nVerdict: {verdict}")
+    if verdict == "PARTIAL-PASS":
+        print("  Some authoritative indexes were unreachable, so these checks "
+              "did NOT run this pass:")
+        for g in gaps:
+            print(f"    - {g}")
+        if n_skipped:
+            print(f"    - full resolution for {n_skipped} entr"
+                  f"{'y' if n_skipped == 1 else 'ies'} (CHECK_SKIPPED)")
+        print("  PARTIAL-PASS is NOT a clean bill of health. Re-run when "
+              "connectivity returns (or with --refresh) before treating the "
+              "bibliography as verified, and tell the user which checks were "
+              "skipped — do not promise acceptance or a clean result.")
+
     if args.json:
         report = {"file": args.bibfile,
                   "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                   "mode": "offline" if args.offline else "online",
+                  "verdict": verdict,
+                  "skipped_checks": gaps,
                   "entries": results,
                   "summary": {"total": total, "verified": n_verified,
                               "errors": n_err, "warnings_only": n_warn,
                               "unresolved": n_unresolved,
-                              "retracted": n_retracted}}
+                              "retracted": n_retracted,
+                              "canonical_instance": n_instance,
+                              "low_relevance": n_lowrel,
+                              "checks_skipped": n_skipped}}
         try:
             with open(args.json, "w", encoding="utf-8") as f:
                 json.dump(report, f, indent=2)
@@ -1121,7 +1629,9 @@ def main():
         except OSError as e:
             fail(f"cannot write JSON report: {e}")
 
-    if n_err or (args.strict and n_warn):
+    # In --strict (CI gate) mode a PARTIAL-PASS is not a pass: the gate could
+    # not actually run every check, so do not let it exit 0 and signal "clean".
+    if n_err or (args.strict and (n_warn or verdict == "PARTIAL-PASS")):
         sys.exit(2)
     sys.exit(0)
 

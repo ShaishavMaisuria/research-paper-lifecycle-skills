@@ -80,6 +80,16 @@ When sources disagree about an entry, trust in this order:
   sends it from `S2_API_KEY` when set.
 - S2 venue strings are short canonical forms (e.g. `SIGSPATIAL/GIS`,
   `NeurIPS`) — see [the venue-alias problem](#the-venue-alias-problem).
+- **Citation counts & multiple instances** (canonical-instance check): the
+  `/paper/search` endpoint with `fields=...,citationCount,publicationTypes`
+  returns several same-titled records with their citation counts and artifact
+  types. The script uses this to surface, e.g., a far-more-cited conference
+  paper when an entry resolves to a less-cited RFC/report of the same work.
+  Counts are facts S2 reports — fine to show the user; never invent one.
+- **Reference lists for co-citation** (relevance gate): Crossref
+  `works/{doi}?select=reference` returns a work's outgoing reference DOIs. The
+  relevance gate intersects each entry against the union of the confirmed core
+  set's references to estimate co-citation density. Read-only metadata.
 - License: ODC-BY. Fine to fetch and compare; do not redistribute bulk data
   or store fetched abstracts in the repo.
 

@@ -11,9 +11,16 @@ Subcommands:
             verified, theme, reason)
   list      list papers, filterable by status/theme; --json for machine use
   stats     pipeline progress counts (found/included/fetched/extracted/verified)
-  bibtex    emit skeleton BibTeX from corpus metadata (stdout). Fields come
-            from search metadata and MUST then be checked with the
-            verify-citations skill before use.
+  bibtex    emit skeleton BibTeX from corpus metadata (stdout), using the
+            corpus's own cite keys verbatim. Fields come from search metadata
+            and MUST then be checked with the verify-citations skill before
+            use.
+  check-keys assert references.bib uses exactly the corpus's included-paper
+            keys (no drift, no duplicates) -- the cross-file consistency gate
+            that keeps the corpus, the .bib, and the review's [@key]s aligned.
+
+corpus.py is the SINGLE SOURCE OF TRUTH for cite keys (see make_key): keys are
+minted on import and reused by `bibtex`; never hand-edit a key in the .bib.
 
 Examples:
   python3 corpus.py add --corpus lit-review/x/corpus.json \\
@@ -96,7 +103,15 @@ def new_paper(**kw) -> dict:
 
 
 def make_key(rec: dict, existing: dict) -> str:
-    """firstauthorlastname + year + first significant title word."""
+    """firstauthorlastname + year + first significant title word.
+
+    This is the SINGLE SOURCE OF TRUTH for cite keys. Every key in the corpus
+    is minted here (on import) or supplied by hand (cmd_add); `cmd_bibtex`
+    then emits references.bib using *exactly* those corpus keys, and
+    `cmd_check_keys` asserts the .bib has not drifted from the corpus. Never
+    hand-edit a key in references.bib -- change it here (corpus.py add
+    --update) so the corpus, the .bib, and the review's [@key]s stay in lock
+    step and the verified-citation chain is not silently broken."""
     authors = rec.get("authors") or []
     last = "anon"
     if authors:
@@ -323,6 +338,67 @@ def cmd_bibtex(args) -> None:
         print("}")
 
 
+BIB_KEY_RE = re.compile(r"@\s*[A-Za-z]+\s*[{(]\s*([^,\s{}()\"]+)")
+
+
+def bib_keys(path: str) -> list[str]:
+    """Cite keys defined in a .bib file (stdlib regex scan; tolerant of the
+    common forms). Used only for the cross-file consistency assertion."""
+    text = Path(path).read_text(encoding="utf-8")
+    keys = []
+    for m in BIB_KEY_RE.finditer(text):
+        # skip @string/@comment/@preamble pseudo-entries
+        head = text[m.start():m.start() + 40].lower().lstrip("@ ")
+        if head.startswith(("string", "comment", "preamble")):
+            continue
+        keys.append(m.group(1))
+    return keys
+
+
+def cmd_check_keys(args) -> None:
+    """Assert references.bib uses exactly the corpus's included-paper keys.
+
+    Catches the silent failure where corpus.json and references.bib drift
+    apart (a .bib entry hand-renamed, an included paper missing from the
+    .bib), which breaks the verified-citation chain because check_review.py
+    gates on corpus keys while pandoc/LaTeX resolves against the .bib."""
+    corpus = load_corpus(args.corpus)
+    included = {
+        k for k, r in corpus["papers"].items()
+        if r["status"]["screened"] == "included"
+    }
+    bibpath = Path(args.bib)
+    if not bibpath.exists():
+        fail(f"bib file not found: {args.bib}\n"
+             "Generate it from the corpus: corpus.py bibtex > references.bib")
+    bkeys = bib_keys(args.bib)
+    bset = set(bkeys)
+    dups = sorted({k for k in bkeys if bkeys.count(k) > 1})
+    missing = sorted(included - bset)   # in corpus, absent from .bib
+    extra = sorted(bset - included)     # in .bib, not an included corpus key
+
+    print(f"check-keys: {args.bib} against {args.corpus}")
+    print(f"  {len(included)} included corpus keys, {len(bset)} .bib keys")
+    problems = 0
+    for k in dups:
+        print(f"  FAIL  duplicate key in .bib: {k}")
+        problems += 1
+    for k in missing:
+        print(f"  FAIL  included paper has no .bib entry: {k} "
+              "(re-run: corpus.py bibtex > references.bib)")
+        problems += 1
+    for k in extra:
+        print(f"  FAIL  .bib key not an included corpus paper: {k} "
+              "(hand-edited key? regenerate the .bib from the corpus)")
+        problems += 1
+    if problems:
+        print(f"\nRESULT: FAIL ({problems} key mismatches) -- corpus.json is "
+              "the source of truth; regenerate references.bib with "
+              "corpus.py bibtex.")
+        sys.exit(1)
+    print("\nRESULT: PASS (corpus keys and .bib keys are in lock step)")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -379,6 +455,12 @@ def main() -> None:
 
     pb = sub.add_parser("bibtex", help="emit skeleton BibTeX for included papers")
     pb.set_defaults(func=cmd_bibtex)
+
+    pck = sub.add_parser(
+        "check-keys",
+        help="assert references.bib uses exactly the corpus's included keys")
+    pck.add_argument("bib", help="path to references.bib")
+    pck.set_defaults(func=cmd_check_keys)
 
     args = p.parse_args()
     args.func(args)

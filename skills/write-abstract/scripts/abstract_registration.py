@@ -25,7 +25,8 @@ import os
 import sys
 
 import venueyaml
-from abstract_check import _ABSTRACT_RE, latex_words, resolve_inputs, strip_comments
+from abstract_check import (_ABSTRACT_RE, _PLACEHOLDER_RE, latex_words,
+                            resolve_inputs, strip_comments)
 
 
 def _parse_date(value):
@@ -199,6 +200,14 @@ def main(argv=None):
     if abstract:
         L.append(abstract)
         L.append("")
+        ph = _PLACEHOLDER_RE.search(abstract)
+        if ph:
+            warn = ("placeholder text %r found in this abstract — do NOT "
+                    "register it as-is; several venues (e.g. KDD, AAAI) delete "
+                    "or desk-reject placeholder abstracts" % ph.group(0))
+            L.append("**WARNING: %s.**" % warn)
+            L.append("")
+            sys.stderr.write("warning: %s\n" % warn)
         if isinstance(limits, list) and len(limits) == 2:
             ok = limits[0] <= abs_words <= limits[1]
             L.append("(%d words — venue limit %d-%d: %s)"

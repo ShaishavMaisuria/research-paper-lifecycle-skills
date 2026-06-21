@@ -18,9 +18,11 @@ citation key, show the user a before/after diff. Re-check fixed entries with
    - [DUPLICATE_KEY / DUPLICATE_DOI / DUPLICATE_TITLE](#duplicates)
    - [MALFORMED_DOI / MALFORMED_ARXIV_ID](#malformed-identifiers)
 2. [WARN flags](#warn-flags)
+   - [CANONICAL_INSTANCE](#canonical_instance)
 3. [INFO flags](#info-flags)
-4. [Known false positives](#known-false-positives)
-5. [The fix workflow, end to end](#the-fix-workflow-end-to-end)
+4. [The PARTIAL-PASS verdict](#the-partial-pass-verdict)
+5. [Known false positives](#known-false-positives)
+6. [The fix workflow, end to end](#the-fix-workflow-end-to-end)
 
 ## ERROR flags
 
@@ -124,6 +126,40 @@ publisher renamed the record "RETRACTED ARTICLE: ...". Required handling:
 | MISSING_FIELDS | Required fields for the entry type absent | Fill from canonical record; venues' bib styles error or render badly without them |
 | IMPLAUSIBLE_YEAR | Not a 4-digit year in 1900..next year | Fix the typo |
 | EXPRESSION_OF_CONCERN | Publisher signaled doubts | See [RETRACTED](#retracted), point 4 |
+| CANONICAL_INSTANCE | Title resolves, but a different artifact is what the field cites | See [CANONICAL_INSTANCE](#canonical_instance) — pick the instance your readers cite |
+| LOW_RELEVANCE | Resolves, but low topical fit to the paper | See [references/relevance-gate.md](relevance-gate.md) — confirm load-bearing, never auto-remove |
+
+### CANONICAL_INSTANCE
+
+Resolution proved the identifier points at a real record — but the *named
+work* exists as more than one real artifact, and the script found that a
+**different** instance is the one the field predominantly cites (it carries
+materially more citations). Common shapes, all of them generic patterns the
+script detects from venue strings and citation counts, never a hardcoded list:
+
+- the original **conference/journal paper** vs a later **RFC, standard,
+  tech-report, or working draft** that re-states the same result;
+- a **preprint** vs the **published** version (when the published one is what
+  everyone cites);
+- a paper vs a **book chapter / extended journal version** of it.
+
+Why it matters: citing the wrong artifact reads as not knowing the literature,
+and reviewers who know the area notice. The classic tell is an entry that
+resolves cleanly to a standards-body or report DOI while the community's
+citation graph points at the venue paper.
+
+Triage:
+1. Read the alternatives the script printed (each with a citation count and a
+   resolvable URL — all are real records it retrieved, none invented).
+2. Decide which artifact you *mean* to cite. Usually it is the most-cited
+   venue paper; sometimes the standard/report is correct (you are citing the
+   protocol, not the analysis) — that is your call.
+3. If you switch, fetch the chosen artifact's canonical BibTeX (see "Fetching
+   canonical BibTeX" in [verification-sources.md](verification-sources.md)),
+   keep the citation key, show the diff.
+4. If the current instance is the right one, keep it — the flag is advisory.
+
+Never auto-swap. The script surfaces; you and the user choose.
 
 ## INFO flags
 
@@ -135,6 +171,31 @@ publisher renamed the record "RETRACTED ARTICLE: ...". Required handling:
 - **HAS_CORRECTION** — an erratum exists. Usually fine to cite the original;
   mention the erratum to the user if the cited claim might be the corrected
   part.
+- **RELEVANCE_OK** — the relevance gate scored this entry as a good topical
+  fit. Informational; no action.
+- **CHECK_SKIPPED** — every index that could resolve this entry was
+  unreachable this run. The entry is **not** verified (and **not** branded
+  UNRESOLVED — that would falsely imply fabrication). The run is PARTIAL-PASS;
+  re-run the entry with `--key` once connectivity returns.
+
+## The PARTIAL-PASS verdict
+
+The script prints one overall verdict: **PASS**, **PARTIAL-PASS**, or
+**FAIL**.
+
+- **PASS** — all selected entries were checked online with no errors.
+- **FAIL** — at least one entry has an ERROR flag. Fix before submission.
+- **PARTIAL-PASS** — no errors, but at least one authoritative index was
+  unreachable, so some checks did not run. The script lists exactly which
+  checks were skipped (e.g. "DOI resolution, metadata & retraction checks
+  (Crossref)") and how many entries fell back to `CHECK_SKIPPED`.
+
+A PARTIAL-PASS is **not** a clean bill of health — it means "checked what I
+could reach." Report it as PARTIAL-PASS verbatim, never as "passed". Re-run
+the skipped checks once connectivity returns (or with `--refresh`) before
+declaring the bibliography verified. In `--strict` (CI gate) mode a
+PARTIAL-PASS exits nonzero, because a gate that could not run every check has
+not passed.
 
 ## Known false positives
 
@@ -172,6 +233,12 @@ curl -s "https://dblp.org/rec/journals/cacm/DeanG08.bib"
 # 4. Re-verify just the fixed entries
 python3 scripts/check_bibtex.py refs.bib --key dean2008mapreduce --refresh
 
-# 5. Final gate: full pass, strict mode for submission-critical runs
+# 5. Final gate: full pass, strict mode for submission-critical runs.
+#    --strict exits nonzero on warnings AND on PARTIAL-PASS, so this only
+#    prints "GATE PASSED" on a true PASS — never on an unreachable-index run.
 python3 scripts/check_bibtex.py refs.bib --strict && echo "GATE PASSED"
+
+# Optional: relevance-gate independently-added references against the thesis.
+python3 scripts/check_bibtex.py refs.bib \
+    --thesis-file thesis.txt --core-key dean2008 --core-key vaswani2017
 ```
