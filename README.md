@@ -92,6 +92,18 @@ Will this get desk-rejected at an IEEE conference? Check my main.tex against thi
 The right skill should trigger itself, load its `SKILL.md`, run any relevant
 helpers, and return a sourced report.
 
+### No paper yet? Start with any paper folder
+
+You do not need a bundled template. Put your draft files in a normal project
+folder and let the skills build the research workflow around it.
+
+1. **Create the basics:** `main.tex` or a manuscript draft, plus `refs.bib` if
+   you already have references.
+2. **Set the context:** ask for `paper-profile`, then say the target venue,
+   field, contribution type, and deadline if you know them.
+3. **Run the first checks:** ask *"verify refs.bib"*, *"find missing related
+   work"*, *"write the abstract for SIGSPATIAL"*, or *"preflight my paper"*.
+
 ## How it works
 
 <p align="center">
