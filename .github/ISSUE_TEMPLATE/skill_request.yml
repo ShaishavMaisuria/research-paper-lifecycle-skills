@@ -1,0 +1,46 @@
+name: Skill request
+description: Propose a new skill or an improvement to an existing skill.
+title: "[Skill]: "
+labels: ["enhancement", "skill"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the research workflow, not private paper content. Keep examples
+        public-safe and avoid copyrighted source text.
+  - type: dropdown
+    id: request_type
+    attributes:
+      label: Request type
+      options:
+        - New skill
+        - Improve existing skill
+        - Improve helper script
+        - Improve integration
+    validations:
+      required: true
+  - type: input
+    id: skill
+    attributes:
+      label: Skill name or proposed name
+      placeholder: verify-citations
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Research workflow
+      description: What should the skill help a researcher do?
+    validations:
+      required: true
+  - type: textarea
+    id: trigger
+    attributes:
+      label: Example user request
+      description: What would someone naturally ask an agent?
+      placeholder: Check whether this camera-ready package is missing required files.
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Useful checks or guardrails
+      description: List deterministic checks, policy boundaries, or failure modes.

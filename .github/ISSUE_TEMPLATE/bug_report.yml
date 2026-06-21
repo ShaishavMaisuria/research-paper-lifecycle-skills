@@ -1,0 +1,64 @@
+name: Bug report
+description: Report something broken in a skill, script, workflow, or docs.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Please do not include private drafts,
+        reviews, credentials, unpublished data, or copyrighted paper content.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Skill behavior
+        - Helper script
+        - Install or packaging
+        - README or docs
+        - GitHub workflow
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: skill
+    attributes:
+      label: Skill name
+      description: If this affects a specific skill, name it here.
+      placeholder: preflight-check
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the bug and the result you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Use a minimal public-safe example when possible.
+      placeholder: |
+        1. Install with ...
+        2. Ask the agent to ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output
+      description: Paste logs or command output after removing sensitive data.
+      render: text
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Agent, OS, Node/Python versions, and install command.
+      placeholder: |
+        Agent:
+        OS:
+        Node:
+        Python:
+        Install command:

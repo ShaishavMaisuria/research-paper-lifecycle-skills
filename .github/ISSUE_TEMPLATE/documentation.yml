@@ -1,0 +1,28 @@
+name: Documentation issue
+description: Suggest a README, install, integration, or wording fix.
+title: "[Docs]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for public documentation problems. Do not paste private paper
+        drafts, reviews, or copyrighted paper text.
+  - type: input
+    id: page
+    attributes:
+      label: Page or file
+      placeholder: README.md
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is confusing or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested change
+      description: Include replacement wording if you have it.
