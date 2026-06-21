@@ -151,10 +151,12 @@ def _cache_path(url: str) -> str:
     return os.path.join(CACHE_DIR, f"{digest}.json")
 
 
-def http_get(url, *, min_interval=1.0, headers=None, ttl=DEFAULT_TTL,
+def http_get(url, *, min_interval=1.0, headers=None, ttl=None,
              use_cache=True, none_on=()):
     """Polite GET returning the body as text, or None when the status code
     is in `none_on` (negative results are cached too)."""
+    if ttl is None:
+        ttl = DEFAULT_TTL  # read at call time so --refresh can zero it
     cpath = _cache_path(url)
     if use_cache:
         entry = _load_json(cpath)
@@ -167,6 +169,7 @@ def http_get(url, *, min_interval=1.0, headers=None, ttl=DEFAULT_TTL,
         req_headers.update(headers)
 
     delay = 2.0
+    last_err = ""
     for attempt in range(1, MAX_RETRIES + 1):
         _throttle(host, min_interval)
         req = urllib.request.Request(url, headers=req_headers)
@@ -202,14 +205,24 @@ def http_get(url, *, min_interval=1.0, headers=None, ttl=DEFAULT_TTL,
             except Exception:
                 pass
             fail(f"HTTP {e.code} from {host}\n  url: {url}\n  {detail}".rstrip())
-        except urllib.error.URLError as e:
-            fail(f"network error reaching {host}: {e.reason}\n"
-                 "Check connectivity, or rerun with --offline.")
-        except TimeoutError:
-            fail(f"timed out after {TIMEOUT}s talking to {host}")
-    fail(f"gave up after {MAX_RETRIES} attempts (persistent HTTP 429) from "
-         f"{host}. Wait a minute and retry. For api.semanticscholar.org, a "
-         "free key via S2_API_KEY gives a dedicated 1 req/s allowance.")
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            # Connection resets (ConnectionResetError) and other transient
+            # network errors are how some hosts (e.g. dblp.org) shed bursty
+            # clients — back off and retry like a 429 rather than crashing.
+            reason = getattr(e, "reason", e)
+            last_err = f"{type(e).__name__}: {reason}"
+            if attempt < MAX_RETRIES:
+                print(f"  transient network error from {host} ({last_err}); "
+                      f"backing off {delay:.0f}s "
+                      f"(attempt {attempt}/{MAX_RETRIES})", file=sys.stderr)
+                time.sleep(delay)
+                delay *= 2
+                continue
+    fail(f"gave up after {MAX_RETRIES} attempts talking to {host}"
+         + (f" (last error: {last_err})" if last_err else " (persistent HTTP 429)")
+         + ". Wait a minute and retry, or rerun with --offline. For "
+         "api.semanticscholar.org, a free key via S2_API_KEY gives a dedicated "
+         "1 req/s allowance.")
     raise AssertionError("unreachable")
 
 

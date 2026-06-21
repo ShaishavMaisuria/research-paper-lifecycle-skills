@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <img alt="Skills: 38" src="https://img.shields.io/badge/skills-38-2f6feb.svg">
+  <img alt="Skills: 39" src="https://img.shields.io/badge/skills-39-2f6feb.svg">
   <img alt="Package: Agent Skills" src="https://img.shields.io/badge/package-Agent%20Skills-111827.svg">
   <img alt="No bundled papers" src="https://img.shields.io/badge/paper%20content-not%20bundled-green.svg">
 </p>
@@ -33,7 +33,7 @@ adapt to adjacent research fields.
 |---|---|
 | Profile | Capture paper positioning and local lessons so later passes stay calibrated. |
 | Discover | Find papers, fetch legal open-access copies, study exemplars. |
-| Write | Draft abstracts, literature reviews, related work, and polished prose. |
+| Write | Draft abstracts, literature reviews, related work, polished prose, and Overleaf round-trips. |
 | Verify | Check BibTeX entries, originality, duplicates, metadata mismatches, and likely fabrications. |
 | Submit | Parse CFPs, select venues, tailor the paper, anonymize, and run preflight checks. |
 | Artifacts | Test, verify, refactor, and package research code for reproducibility review. |
@@ -183,6 +183,10 @@ Check whether my paper claims are supported by evidence.
 Get my research code ready for artifact evaluation.
 ```
 
+```text
+My paper is on Overleaf; pull it local, run the checks, and help me sync back.
+```
+
 For venue-aware skills, provide a local venue profile or ask the agent to
 create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 
@@ -219,6 +223,7 @@ create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 | `match-style` | Align a draft to the author's own prior writing voice or venue register. |
 | `polish-tables-figures` | Improve LaTeX tables, figures, captions, crossrefs, and palettes. |
 | `refactor-structure` | Diagnose and repair the paper's argument architecture before rewriting prose. |
+| `work-with-overleaf` | Bring an Overleaf project into a local workflow, run skills, and sync back safely. |
 
 ### Paper Submission
 
@@ -309,6 +314,17 @@ compares reported metrics to produced outputs, `refactor-research-code` cleans
 without moving results, and `prepare-artifacts` builds the packaging and badge
 plan.
 
+### Overleaf Round Trip
+
+```text
+work-with-overleaf -> preflight-check / verify-citations / polish-prose -> work-with-overleaf
+```
+
+Use this path when the paper lives in Overleaf. `work-with-overleaf` helps
+choose Git integration, GitHub sync, or ZIP export, keeps tokens secret, runs
+the requested skills on the local copy, and never pushes changes back without
+author confirmation.
+
 ### Two-Pass Reflection
 
 ```text
@@ -382,7 +398,7 @@ skill instructions to decide when and how to run them.
 ## Repository Layout
 
 ```text
-skills/                         38 agent skills
+skills/                         39 agent skills
   <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance
   <skill>/scripts/               deterministic helper scripts
