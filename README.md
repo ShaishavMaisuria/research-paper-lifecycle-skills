@@ -32,8 +32,9 @@ from live CFPs or author instructions instead of guessing, so the agent can
 catch desk-reject risks before a reviewer ever sees the paper.
 
 **Who it is for:** researchers, PhD students, labs, and builders supporting
-research workflows. The skills are field-agnostic, with the deepest current
-examples and testing in Computer Science conference and journal workflows.
+research workflows across disciplines. The skills are field-agnostic and built
+around universal publishing work: finding sources, verifying citations, meeting
+venue rules, responding to reviews, preparing artifacts, and presenting results.
 
 **Copilot, not pilot:** skills draft, check, and explain. You decide, you stay
 the author, and nothing is submitted anywhere on your behalf.
