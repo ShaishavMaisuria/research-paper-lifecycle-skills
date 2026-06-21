@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <img alt="Skills: 39" src="https://img.shields.io/badge/skills-39-2f6feb.svg">
+  <img alt="Skills: 40" src="https://img.shields.io/badge/skills-40-2f6feb.svg">
   <img alt="Package: Agent Skills" src="https://img.shields.io/badge/package-Agent%20Skills-111827.svg">
   <img alt="No bundled papers" src="https://img.shields.io/badge/paper%20content-not%20bundled-green.svg">
 </p>
@@ -187,6 +187,10 @@ Get my research code ready for artifact evaluation.
 My paper is on Overleaf; pull it local, run the checks, and help me sync back.
 ```
 
+```text
+Show me an HTML dashboard of the paper workspace and refresh it after updates.
+```
+
 For venue-aware skills, provide a local venue profile or ask the agent to
 create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 
@@ -201,6 +205,7 @@ create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 | `orchestrate-paper` | Coordinate the full idea-to-submission lifecycle with checkpoints and measurable exits. |
 | `paper-profile` | Capture paper positioning, risk appetite, target venues, and writing preferences in local `.paper-memory/`. |
 | `reflect-and-improve` | Critique a generated artifact, check whether it measurably improved, and append durable local lessons. |
+| `render-workspace-html` | Render `paper-workspace/` into a local browser dashboard of progress and outputs. |
 
 ### Paper Search
 
@@ -325,6 +330,16 @@ choose Git integration, GitHub sync, or ZIP export, keeps tokens secret, runs
 the requested skills on the local copy, and never pushes changes back without
 author confirmation.
 
+### Workspace Dashboard
+
+```text
+render-workspace-html -> open paper-workspace/dashboard.html
+```
+
+Use this path when the paper workspace has enough outputs that a browser view
+would help. `render-workspace-html` creates one self-contained local HTML file,
+with stage cards and recent activity, and refreshes it only when requested.
+
 ### Two-Pass Reflection
 
 ```text
@@ -398,7 +413,7 @@ skill instructions to decide when and how to run them.
 ## Repository Layout
 
 ```text
-skills/                         39 agent skills
+skills/                         40 agent skills
   <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance
   <skill>/scripts/               deterministic helper scripts
