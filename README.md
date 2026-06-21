@@ -152,65 +152,52 @@ Get it submission-ready for SIGSPATIAL.
 
 ## Find the skill you need
 
-Search by what you want to do, not by skill name.
+Search by what you want to do, then open the linked `SKILL.md` for the exact
+trigger rules, process, guardrails, references, and scripts.
 
-**Start here**
-
-| I want to... | Skill |
-|---|---|
-| Run the whole lifecycle with checkpoints | [`orchestrate-paper`](skills/orchestrate-paper) |
-| Get one overall paper-health report | [`assess-paper`](skills/assess-paper) |
-| Capture paper positioning and preferences | [`paper-profile`](skills/paper-profile) |
-| Check whether a generated change actually improved things | [`reflect-and-improve`](skills/reflect-and-improve) |
-| Render a browser dashboard of outputs | [`render-workspace-html`](skills/render-workspace-html) |
-
-**Write it**:
-[`reflect-paper`](skills/reflect-paper),
-[`write-abstract`](skills/write-abstract),
-[`literature-review`](skills/literature-review),
-[`draft-related-work`](skills/draft-related-work),
-[`polish-prose`](skills/polish-prose),
-[`match-style`](skills/match-style),
-[`polish-tables-figures`](skills/polish-tables-figures),
-[`refactor-structure`](skills/refactor-structure),
-[`fit-page-limit`](skills/fit-page-limit),
-[`work-with-overleaf`](skills/work-with-overleaf).
-
-**Find papers and cite right**:
-[`find-papers`](skills/find-papers),
-[`fetch-paper`](skills/fetch-paper),
-[`verify-citations`](skills/verify-citations),
-[`check-originality`](skills/check-originality),
-[`study-exemplars`](skills/study-exemplars).
-
-**Get it past review**:
-[`parse-cfp`](skills/parse-cfp),
-[`select-venue`](skills/select-venue),
-[`tailor-to-venue`](skills/tailor-to-venue),
-[`preflight-check`](skills/preflight-check),
-[`anonymize-paper`](skills/anonymize-paper),
-[`verify-claims`](skills/verify-claims),
-[`simulate-reviewers`](skills/simulate-reviewers),
-[`benchmark-paper`](skills/benchmark-paper),
-[`plan-submission`](skills/plan-submission),
-[`add-venue-profile`](skills/add-venue-profile).
-
-**Reviews came back / it got in**:
-[`triage-reviews`](skills/triage-reviews),
-[`write-rebuttal`](skills/write-rebuttal),
-[`prepare-camera-ready`](skills/prepare-camera-ready).
-
-**Make the code reproducible**:
-[`test-research-code`](skills/test-research-code),
-[`verify-results`](skills/verify-results),
-[`refactor-research-code`](skills/refactor-research-code),
-[`prepare-artifacts`](skills/prepare-artifacts).
-
-**Present it**:
-[`make-slides`](skills/make-slides),
-[`write-talk-script`](skills/write-talk-script),
-[`rehearse-qa`](skills/rehearse-qa),
-[`make-poster`](skills/make-poster).
+| Stage | Skill | Use it for |
+|---|---|---|
+| Coordinate | [`orchestrate-paper`](skills/orchestrate-paper/SKILL.md) | Run the whole lifecycle with checkpoints. |
+| Coordinate | [`assess-paper`](skills/assess-paper/SKILL.md) | Get one overall paper-health report. |
+| Coordinate | [`paper-profile`](skills/paper-profile/SKILL.md) | Capture paper positioning and preferences. |
+| Coordinate | [`reflect-paper`](skills/reflect-paper/SKILL.md) | Run separate Researcher and Writer reflection passes. |
+| Coordinate | [`reflect-and-improve`](skills/reflect-and-improve/SKILL.md) | Check whether a generated change actually improved. |
+| Coordinate | [`render-workspace-html`](skills/render-workspace-html/SKILL.md) | Render a browser dashboard of outputs. |
+| Discover | [`find-papers`](skills/find-papers/SKILL.md) | Search scholarly metadata and proceedings. |
+| Discover | [`fetch-paper`](skills/fetch-paper/SKILL.md) | Fetch legal open-access copies. |
+| Discover | [`study-exemplars`](skills/study-exemplars/SKILL.md) | Study strong papers from a target venue. |
+| Discover | [`literature-review`](skills/literature-review/SKILL.md) | Build a structured, citation-grounded review. |
+| Write | [`write-abstract`](skills/write-abstract/SKILL.md) | Draft, revise, or lint a venue-aware abstract. |
+| Write | [`draft-related-work`](skills/draft-related-work/SKILL.md) | Position related work against verified references. |
+| Write | [`polish-prose`](skills/polish-prose/SKILL.md) | Tighten academic prose without changing claims. |
+| Write | [`match-style`](skills/match-style/SKILL.md) | Align a draft to the author's voice or venue style. |
+| Write | [`polish-tables-figures`](skills/polish-tables-figures/SKILL.md) | Clean up figures, tables, captions, and crossrefs. |
+| Write | [`refactor-structure`](skills/refactor-structure/SKILL.md) | Repair argument structure and narrative flow. |
+| Write | [`fit-page-limit`](skills/fit-page-limit/SKILL.md) | Compress or expand a paper to fit a target length. |
+| Write | [`work-with-overleaf`](skills/work-with-overleaf/SKILL.md) | Bring Overleaf projects into a local workflow. |
+| Verify | [`verify-citations`](skills/verify-citations/SKILL.md) | Check BibTeX entries for fabricated or mismatched records. |
+| Verify | [`check-originality`](skills/check-originality/SKILL.md) | Check plagiarism, self-plagiarism, and text recycling. |
+| Verify | [`verify-claims`](skills/verify-claims/SKILL.md) | Audit claims against evidence, results, and citations. |
+| Submit | [`parse-cfp`](skills/parse-cfp/SKILL.md) | Turn a live CFP into a requirements card. |
+| Submit | [`add-venue-profile`](skills/add-venue-profile/SKILL.md) | Create or refresh a venue profile from live sources. |
+| Submit | [`select-venue`](skills/select-venue/SKILL.md) | Build a ranked venue and track shortlist. |
+| Submit | [`tailor-to-venue`](skills/tailor-to-venue/SKILL.md) | Adapt a draft to a venue, track, template, or limit. |
+| Submit | [`preflight-check`](skills/preflight-check/SKILL.md) | Catch desk-reject risks before submission. |
+| Submit | [`anonymize-paper`](skills/anonymize-paper/SKILL.md) | Sweep for double-blind identity leaks. |
+| Submit | [`plan-submission`](skills/plan-submission/SKILL.md) | Build a deadline-aware submission timeline. |
+| Submit | [`simulate-reviewers`](skills/simulate-reviewers/SKILL.md) | Run a venue-calibrated mock review. |
+| Submit | [`benchmark-paper`](skills/benchmark-paper/SKILL.md) | Compare draft shape to strong venue exemplars. |
+| Respond | [`triage-reviews`](skills/triage-reviews/SKILL.md) | Convert raw reviews into a response plan. |
+| Respond | [`write-rebuttal`](skills/write-rebuttal/SKILL.md) | Draft rebuttals and author responses. |
+| Publish | [`prepare-camera-ready`](skills/prepare-camera-ready/SKILL.md) | Walk through final-file and publication rails. |
+| Artifacts | [`test-research-code`](skills/test-research-code/SKILL.md) | Make research code runnable and repeatable. |
+| Artifacts | [`verify-results`](skills/verify-results/SKILL.md) | Compare reported metrics with local outputs. |
+| Artifacts | [`refactor-research-code`](skills/refactor-research-code/SKILL.md) | Clean research code for release without changing behavior. |
+| Artifacts | [`prepare-artifacts`](skills/prepare-artifacts/SKILL.md) | Package code/data for reproducibility review. |
+| Present | [`make-slides`](skills/make-slides/SKILL.md) | Turn a paper into a conference talk deck. |
+| Present | [`write-talk-script`](skills/write-talk-script/SKILL.md) | Write a timed speaker script. |
+| Present | [`rehearse-qa`](skills/rehearse-qa/SKILL.md) | Practice hostile and curious Q&A. |
+| Present | [`make-poster`](skills/make-poster/SKILL.md) | Create and check a research poster. |
 
 ## Common workflows
 
