@@ -1,0 +1,77 @@
+{
+  "name": "research-paper-lifecycle-skills",
+  "owner": {
+    "name": "Shaishav Maisuria",
+    "email": "shaishavm1998@gmail.com"
+  },
+  "metadata": {
+    "description": "Agent skills for the full research-paper lifecycle: CFP parsing, venue tailoring, desk-reject preflight, literature search, rebuttals, camera-ready, and conference talks.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "paper-search",
+      "source": "./",
+      "description": "Key-free scholarly search and legal open-access fetching: DBLP, Crossref, Semantic Scholar, arXiv, Unpaywall — plus citation verification and exemplar study.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "keywords": ["research", "arxiv", "dblp", "semantic-scholar", "citations"],
+      "skills": [
+        "./skills/find-papers",
+        "./skills/fetch-paper",
+        "./skills/verify-citations",
+        "./skills/study-exemplars"
+      ]
+    },
+    {
+      "name": "paper-writing",
+      "source": "./",
+      "description": "Venue-aware academic writing: abstracts, related work, literature reviews, and prose polish grounded in verified citations.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "keywords": ["academic-writing", "abstract", "latex", "literature-review"],
+      "skills": [
+        "./skills/write-abstract",
+        "./skills/literature-review",
+        "./skills/draft-related-work",
+        "./skills/polish-prose",
+        "./skills/polish-tables-figures"
+      ]
+    },
+    {
+      "name": "paper-submission",
+      "source": "./",
+      "description": "The post-draft lifecycle nobody else covers: CFP requirement parsing, venue/track selection and tailoring, desk-reject preflight, anonymization, review triage, rebuttals in all three real formats, and camera-ready rails for ACM and IEEE.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "keywords": ["cfp", "submission", "rebuttal", "camera-ready", "ieee", "acm", "desk-reject"],
+      "skills": [
+        "./skills/parse-cfp",
+        "./skills/select-venue",
+        "./skills/tailor-to-venue",
+        "./skills/preflight-check",
+        "./skills/anonymize-paper",
+        "./skills/triage-reviews",
+        "./skills/write-rebuttal",
+        "./skills/simulate-reviewers",
+        "./skills/prepare-camera-ready",
+        "./skills/plan-submission",
+        "./skills/add-venue-profile"
+      ]
+    },
+    {
+      "name": "paper-presenting",
+      "source": "./",
+      "description": "From accepted paper to the podium: slide decks, talk scripts timed to the exact slot, Q&A rehearsal, and venue-sized posters.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "keywords": ["slides", "talk", "poster", "presentation", "conference"],
+      "skills": [
+        "./skills/make-slides",
+        "./skills/write-talk-script",
+        "./skills/rehearse-qa",
+        "./skills/make-poster"
+      ]
+    }
+  ]
+}

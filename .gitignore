@@ -1,0 +1,14 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.cache/
+.venv/
+venv/
+node_modules/
+dist/
+build/
+*.log
+*.aux
+*.out
+*.toc
+*.synctex.gz

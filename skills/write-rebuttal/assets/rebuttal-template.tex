@@ -1,0 +1,109 @@
+% =============================================================================
+% rebuttal-template.tex — generic ONE-PAGE author-rebuttal scaffold
+% Part of research-paper-skills / write-rebuttal. MIT licensed; original work,
+% no venue style files copied.
+%
+% WHEN TO USE THIS FILE
+%   - The venue mandates a one-page PDF rebuttal but ships NO official
+%     rebuttal template, or you are drafting before porting.
+%   - If the venue ships an official rebuttal kit (e.g. CVPR's author-kit
+%     repository includes a rebuttal template), you MUST use that kit for the
+%     actual submission — wrong template is a reject-without-review trigger.
+%     Draft here if convenient, then port the body text into the official kit.
+%
+% HARD RULES THIS LAYOUT ENCODES (re-verify on the venue's author guidelines):
+%   - exactly ONE page; over-length rebuttals are typically not reviewed
+%   - two-column, 10pt, letterpaper — matches the common CV-venue look
+%   - anonymous: no author names, affiliations, or identifying links
+%   - no external links (code/video URLs are usually banned in rebuttals)
+%   - do NOT touch \geometry, font sizes, or add negative \vspace to gain
+%     space — template tampering is itself a desk-reject trigger
+%
+% BUILD + CHECK
+%   pdflatex rebuttal.tex
+%   python3 skills/write-rebuttal/scripts/check_budget.py pdf rebuttal.pdf --max-pages 1
+% =============================================================================
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage[letterpaper,margin=0.75in,top=0.9in,bottom=0.9in]{geometry}
+\usepackage{times}            % Times text — the conventional rebuttal look
+\usepackage[T1]{fontenc}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}         % only if you include a compact results table
+\usepackage[pdfborder={0 0 0}]{hyperref} % internal refs only; NO external URLs
+
+\pagestyle{empty}             % many venues require no page number on rebuttals
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3.5pt}
+
+% --- rebuttal macros ---------------------------------------------------------
+% \rpoint{R2.1}{abridged reviewer quote} — a reviewer point, bold ID + italic quote
+\newcommand{\rpoint}[2]{%
+  \vspace{2.5pt}\noindent\textbf{[#1]} \textit{``#2''}\par\nopagebreak}
+% \resp{...} — your response paragraph (plain; keep one para per point)
+\newcommand{\resp}[1]{\noindent #1\par}
+% \rhead{Reviewer 1 (R1)} — per-reviewer block heading
+\newcommand{\rhead}[1]{%
+  \vspace{5pt}\noindent\textbf{\large #1}\par\nopagebreak\vspace{1.5pt}}
+% Reviewer-colored inline IDs for cross-references like "see [R1.2]"
+\newcommand{\rid}[1]{\textbf{[#1]}}
+
+\begin{document}
+
+% --- title line (NO author block — rebuttals stay anonymous) -----------------
+\twocolumn[{\centering
+  {\Large\bfseries Rebuttal for Submission \#XXXX:\\[2pt]
+   Paper Title Goes Here\par}
+  \vspace{8pt}
+}]
+\thispagestyle{empty}
+
+% --- 2–4 line global summary --------------------------------------------------
+We thank all reviewers for their careful reading. R1 and R3 find the method
+novel and the evaluation thorough; the main concerns are a missing baseline
+(\rid{R1.1}, \rid{R2.2}) and the scope of the ablation (\rid{R2.1}). We
+address every point below, citing sections, tables, and line numbers of the
+submitted PDF.
+
+% --- shared concerns first (saves space when reviewers overlap) ---------------
+\rhead{Shared concern: missing baseline B (\rid{R1.1}, \rid{R2.2})}
+\resp{Table~2 (L412--418) already compares against B's strongest published
+configuration; we agree the connection was easy to miss and will name it
+explicitly in the caption. On the requested setting, the protocol of
+Sec.~5.1 applies unchanged; we will add the full row in the revision.}
+
+% --- per-reviewer blocks -------------------------------------------------------
+\rhead{Reviewer 1 (R1)}
+
+\rpoint{R1.2}{The complexity analysis in Sec.~4 seems to assume sparsity.}
+\resp{Correct, and the assumption is stated at L231; Appendix~C gives the
+dense-case bound. We will surface both in the main text (one sentence,
+Sec.~4.3).}
+
+\rhead{Reviewer 2 (R2)}
+
+\rpoint{R2.1}{The ablation does not isolate the effect of component X.}
+\resp{It does, but indirectly: rows 3 vs.\ 5 of Table~4 differ only in X.
+We will reorder the table so the pair is adjacent and label it
+``X on/off''.}
+
+\rpoint{R2.3}{Novelty over [17] is unclear.}
+\resp{[17] solves the offline variant; our setting is streaming with
+deletions (Sec.~2, L96--104), which [17] explicitly leaves open
+(their Sec.~7). The techniques also differ: we replace their global
+re-indexing with the incremental structure of Sec.~3.2.}
+
+\rhead{Reviewer 3 (R3)}
+
+\rpoint{R3.1}{Could the method extend to setting Y?}
+\resp{We believe so via the reduction in Appendix~D, but we have not run
+this experiment and therefore make no empirical claim; we will note it as
+future work.}
+
+% --- closing line (optional if space allows) ----------------------------------
+\vspace{4pt}
+\noindent We will incorporate all clarifications above in the revision and
+believe they are presentation-level changes within the camera-ready budget.
+
+\end{document}

@@ -1,0 +1,126 @@
+---
+name: polish-tables-figures
+description: Polishes LaTeX tables and figures to publication quality. Use when a researcher mentions table formatting, booktabs, figure layout, subfigures, captions, colorblind-safe colors or palettes, cref/cleveref consistency, overfull hbox, column widths, or asks to make tables and figures look professional or camera-ready for a venue (ACM, IEEE, NeurIPS, LNCS, CHI). Converts hline-and-vertical-rule tables to booktabs, sizes columns within the page budget, lays out subfigures with subcaption, applies caption conventions per venue family (table captions above, figure captions below, ACM Description alt-text), fixes ref/cref inconsistencies, and recommends colorblind-safe palettes (Okabe-Ito, Paul Tol) using bundled stdlib-Python linters and palette generators. Edits presentation only — never alters data values, units, or results.
+---
+
+# Polish Tables & Figures
+
+Turn draft-quality LaTeX floats into the tables and figures reviewers expect
+to see at ACM / IEEE / NeurIPS-style / LNCS venues: booktabs rules, columns
+that fit the page budget, clean subfigure layouts, venue-correct captions,
+consistent `\cref` references, and colorblind-safe colors. Every change is
+presentation-only; the numbers are sacred.
+
+## When to use
+
+- "Make my tables/figures look professional" / "polish for camera-ready"
+- "Convert this table to booktabs" / "my table is too wide" / "overfull hbox"
+- "Lay these plots out as subfigures" / "fix my captions"
+- "Are my figure colors colorblind-safe?" / "pick a palette for this plot"
+- "Fix my \\ref/\\cref mess"
+- After `tailor-to-venue`, before `preflight-check`.
+
+## Inputs
+
+1. The main `.tex` file (the one with `\documentclass`); `\input`/`\include`
+   files are followed automatically.
+2. Optional: a venue profile `venues/conferences/<venue>-<year>.yml`
+   (schema in `venues/schema.yml`) — sets column count and caption
+   conventions. Without one, conventions are inferred from the documentclass.
+3. Strongly recommended: a compiled `.log` next to the `.tex` so the
+   column-sizing (overfull box) check can run.
+
+## Process
+
+1. **Resolve venue conventions.** If a venue is named, load its profile
+   (sanity-check with `python3 scripts/venueyaml.py venues/conferences/<venue>.yml`).
+   Re-verify format-critical facts against the live `cfp_url` before relying
+   on them: template/documentclass, column count, any stated figure/table
+   rules (minimum font sizes, color/grayscale requirements, accessibility
+   requirements). Profiles are a starting point, never ground truth.
+
+2. **Lint everything first:**
+
+   ```
+   python3 scripts/check_floats.py paper.tex \
+       --venue venues/conferences/<venue>-<year>.yml
+   ```
+
+   Flags: `--json`, `--strict` (warnings also fail), `--log <file>`,
+   `--overfull-threshold <pt>`, `--no-inputs`. Exit codes: 0 clean,
+   1 findings, 2 bad arguments. The linter covers: booktabs style
+   (`\hline`, `\cline`, vertical rules, double rules, missing package),
+   `\resizebox`/tiny-font scaling, caption position per family, missing
+   `\caption`/`\label`/`\centering`/ACM `\Description`, label-before-caption,
+   deprecated `subfigure` package, `width=\textwidth` in a one-column float
+   at a two-column venue, raster graphics, `[h]`/`[H]` placement,
+   undefined and unreferenced labels, mixed `Figure~\ref` vs `\cref` styles,
+   "Figure \cref" double prefixes, cleveref load order, lowercase `\cref`
+   at sentence start, and Overfull `\hbox` entries from the `.log`.
+
+3. **Fix tables** — work through findings using
+   [references/tables.md](references/tables.md): the mechanical
+   booktabs conversion recipe (it preserves cell content byte-for-byte),
+   then column sizing within the page budget (cut → abbreviate → align
+   numbers → `\tabcolsep` → `tabularx` → `table*` — never `\resizebox`).
+
+4. **Fix figures** — [references/figures.md](references/figures.md):
+   width discipline (`\columnwidth`/`\linewidth`, `figure*` for spans),
+   subfigure layout with `subcaption`, vector formats, font sizes inside
+   plots, float placement.
+
+5. **Fix captions and cross-references** —
+   [references/captions-crossrefs.md](references/captions-crossrefs.md):
+   per-family caption position/style table, self-contained caption writing,
+   and the cleveref setup (load last, `capitalise`, `\cref` vs `\Cref`,
+   one style everywhere).
+
+6. **Fix color** — [references/color-accessibility.md](references/color-accessibility.md).
+   Check the colors actually used in the paper (hex values from TikZ/pgfplots
+   definitions, or sampled from included plots):
+
+   ```
+   python3 scripts/palettes.py check 4477AA EE6677 ...   # arbitrary colors
+   python3 scripts/palettes.py show okabe-ito --format latex|pgfplots|matplotlib
+   ```
+
+   `check` simulates protanopia/deuteranopia/tritanopia and grayscale print,
+   flags confusable pairs (exit 1), and the references file explains
+   redundant encoding (markers + line styles, not color alone). If plots are
+   generated by user scripts (matplotlib/pgfplots), edit the plotting source
+   and ask the user to regenerate — never claim recolored results.
+
+7. **Recompile and re-run the linter** until the verdict is PASS (or every
+   remaining WARN is a deliberate, user-approved choice). Then hand off to
+   `preflight-check` for the full desk-reject lint.
+
+## Output
+
+Edited `.tex` (and plotting-script) changes applied in place with a short
+change log per float: what changed and why, citing the venue convention.
+Plus the final linter report (PASS / PASS-WITH-WARNINGS / FAIL). No new
+files unless the user asks for extracted style snippets (e.g. a
+`colors.tex` palette preamble).
+
+## Adapt to your discipline
+
+Conventions here target CS venues (ACM/IEEE/ML/LNCS). Forking for another
+field: adjust the caption-position conventions in
+`references/captions-crossrefs.md` and the family mapping in
+`scripts/check_floats.py` (`convention_label`); the booktabs, sizing, and
+color guidance is field-agnostic.
+
+## Guardrails
+
+- **Never change data**: cell values, units, significant digits, axis
+  scales, error bars, and legends' meanings are untouchable. Reformatting
+  only. If a value looks wrong, tell the user — do not "fix" it.
+- Never fabricate venue rules. The profile and the live CFP are the only
+  sources; when neither states a rule, label advice as general convention.
+- Do not regenerate or recolor result plots yourself; edit the user's
+  plotting source and let them re-run it.
+- Bold-best-result formatting must come from the user's stated criterion,
+  not your reading of which number "looks best".
+- Citation issues found along the way go to `verify-citations`; submission
+  readiness goes to `preflight-check`. Never submit anything on the user's
+  behalf.
