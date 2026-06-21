@@ -23,7 +23,9 @@ rebuttals, camera-ready forms, talk slots, poster dimensions, and citation
 cleanup.
 
 `research-paper-lifecycle-skills` gives your agent a structured playbook for
-that full lifecycle.
+that full lifecycle. It is currently tuned for Computer Science (CS)
+conference and journal workflows, while keeping the skills generic enough to
+adapt to adjacent research fields.
 
 ## At A Glance
 
