@@ -1,6 +1,6 @@
 ---
 name: simulate-reviewers
-description: Venue-calibrated pre-submission peer-review simulation. Use when a researcher says "simulate reviewers", "mock review", "review my paper like a NeurIPS reviewer", "what would Reviewer 2 say", "red-team my paper", "find weaknesses before I submit", or wants a rubric score / borderline-reject risk estimate for a conference or journal (NeurIPS, ICML, ICLR, CVPR, KDD, SIGMOD, SIGSPATIAL, CHI, ICDE, VLDB, LNCS, TKDE, TODS...). Builds a reviewer panel calibrated to the venue family and track (harsh NeurIPS main-track skeptics vs lenient demo-track judges), scores novelty/soundness/reproducibility/clarity on the venue's review-form scale, hunts weaknesses grounded in quoted paper text, aggregates scores into a decision-risk band with borderline-reject flags, and outputs a prioritized fix list. Advisory simulation only — never predicts real outcomes, never fabricates citations, never submits anything.
+description: Venue-calibrated pre-submission peer-review simulation. Use when a researcher says "simulate reviewers", "mock review", "review my paper like a NeurIPS reviewer", "what would Reviewer 2 say", "red-team my paper", "find weaknesses before I submit", "peer review my paper", "strengths and weaknesses / pros and cons of my paper", "what to focus on", or wants a rubric score / borderline-reject risk estimate for a conference or journal (NeurIPS, ICML, ICLR, CVPR, KDD, SIGMOD, SIGSPATIAL, CHI, ICDE, VLDB, LNCS, TKDE, TODS...). Builds a reviewer panel calibrated to the venue family and track (harsh NeurIPS main-track skeptics vs lenient demo-track judges), scores novelty/soundness/reproducibility/clarity on the venue's review-form scale, hunts weaknesses grounded in quoted paper text, aggregates scores into a decision-risk band with borderline-reject flags, and outputs a prioritized fix list. Advisory simulation only — never predicts real outcomes, never fabricates citations, never submits anything.
 ---
 
 # Simulate Reviewers
@@ -65,6 +65,13 @@ authors what to fix while there is still time.
    calibration, and track modifiers are specified in
    [references/reviewer-personas.md](references/reviewer-personas.md).
    Grounding rules — non-negotiable:
+   - **Each review opens with genuine Strengths**, then Weaknesses — like a
+     real review form. State 2–4 specific strengths (what the paper does well:
+     novelty, a strong experiment, clarity, a useful artifact), each grounded
+     in a section/figure the same way weaknesses are. A review that is all
+     cons is not a real review and misleads the author about what to protect
+     while fixing. Do not invent strengths to pad — if the paper is weak, say
+     so, but find what genuinely works.
    - Every weakness cites a section/figure/line or quotes ≤1 sentence.
    - Never invent prior work. If a persona suspects missing related work,
      find real candidates with `find-papers` and verify them with
@@ -111,9 +118,11 @@ authors what to fix while there is still time.
 ## Output
 
 A simulated review packet, presented in chat (and written to a file only if
-the user asks): N independent reviews in the venue's form format, the
+the user asks): N independent reviews in the venue's form format — each with a
+**Strengths** section and a **Weaknesses** section (pros and cons) — the
 meta-review, the score table + `aggregate_scores.py` decision-risk readout,
-and the prioritized fix list. Every output carries the disclaimer: this is a
+and the prioritized fix list. The meta-review names the paper's biggest
+strength to preserve as well as its biggest risk to fix. Every output carries the disclaimer: this is a
 simulation to improve the paper, **not** a prediction of the real outcome.
 
 ## Adapt to your discipline

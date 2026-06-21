@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <img alt="Skills: 25" src="https://img.shields.io/badge/skills-25-2f6feb.svg">
+  <img alt="Skills: 27" src="https://img.shields.io/badge/skills-27-2f6feb.svg">
   <img alt="Package: Agent Skills" src="https://img.shields.io/badge/package-Agent%20Skills-111827.svg">
   <img alt="No bundled papers" src="https://img.shields.io/badge/paper%20content-not%20bundled-green.svg">
 </p>
@@ -113,7 +113,8 @@ Manual install for tools that expose their own skills directory:
 
 ```bash
 mkdir -p "$YOUR_AGENT_SKILLS_DIR"
-cp -R skills/reflect-paper "$YOUR_AGENT_SKILLS_DIR/"
+SKILL_NAME=benchmark-paper
+cp -R "skills/$SKILL_NAME" "$YOUR_AGENT_SKILLS_DIR/"
 ```
 
 ## Usage Examples
@@ -141,6 +142,15 @@ Run a Researcher pass and Writer pass on this draft, then merge the feedback
 into a revision plan.
 ```
 
+```text
+Score this draft against recent award-winning papers at SIGSPATIAL.
+```
+
+```text
+Make this section match the voice of my previous papers without changing any
+claims or citations.
+```
+
 For venue-aware skills, provide a local venue profile or ask the agent to
 create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 
@@ -166,6 +176,7 @@ create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 | `literature-review` | Build a structured, citation-grounded review. |
 | `draft-related-work` | Position related work against verified references. |
 | `polish-prose` | Tighten academic prose without changing technical claims. |
+| `match-style` | Align a draft to the author's own prior writing voice or venue register. |
 | `polish-tables-figures` | Improve LaTeX tables, figures, captions, crossrefs, and palettes. |
 
 ### Paper Submission
@@ -179,7 +190,8 @@ create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 | `anonymize-paper` | Sweep double-blind leaks and support camera-ready reversal. |
 | `triage-reviews` | Turn raw reviews into a priority matrix. |
 | `write-rebuttal` | Draft responses for OpenReview, one-page PDFs, and R&R cycles. |
-| `simulate-reviewers` | Run a venue-calibrated mock review. |
+| `simulate-reviewers` | Run a venue-calibrated mock review with strengths, weaknesses, and fix priorities. |
+| `benchmark-paper` | Score venue-fit conformance against recent award-winning or top-cited papers. |
 | `prepare-camera-ready` | Walk accepted papers through final-file requirements. |
 | `plan-submission` | Build a backwards timeline from submission deadlines. |
 | `add-venue-profile` | Create a local venue profile from a live CFP. |
@@ -196,6 +208,18 @@ create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 ---
 
 ## Common Workflows
+
+### Benchmark And Align
+
+```text
+preflight-check -> benchmark-paper -> simulate-reviewers -> match-style
+```
+
+Use this path when the paper is structurally close and you want sharper
+submission readiness signals. `benchmark-paper` produces a conformance
+scorecard against venue exemplars, `simulate-reviewers` finds strengths and
+risks to preserve or fix, and `match-style` aligns the prose to the author's
+own voice or the venue register without changing claims.
 
 ### Two-Pass Reflection
 
@@ -270,7 +294,7 @@ skill instructions to decide when and how to run them.
 ## Repository Layout
 
 ```text
-skills/                         25 agent skills
+skills/                         27 agent skills
   <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance
   <skill>/scripts/               deterministic helper scripts

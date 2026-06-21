@@ -26,23 +26,24 @@
     {
       "name": "paper-writing",
       "source": "./",
-      "description": "Venue-aware academic writing: reflection passes, abstracts, related work, literature reviews, and prose polish grounded in verified citations.",
+      "description": "Venue-aware academic writing: reflection passes, abstracts, related work, literature reviews, prose polish, and author/venue style matching grounded in verified citations.",
       "version": "0.1.0",
       "license": "Apache-2.0",
-      "keywords": ["academic-writing", "abstract", "latex", "literature-review"],
+      "keywords": ["academic-writing", "abstract", "latex", "literature-review", "style"],
       "skills": [
         "./skills/reflect-paper",
         "./skills/write-abstract",
         "./skills/literature-review",
         "./skills/draft-related-work",
         "./skills/polish-prose",
+        "./skills/match-style",
         "./skills/polish-tables-figures"
       ]
     },
     {
       "name": "paper-submission",
       "source": "./",
-      "description": "The post-draft lifecycle nobody else covers: CFP requirement parsing, venue/track selection and tailoring, desk-reject preflight, anonymization, review triage, rebuttals in all three real formats, and camera-ready rails for ACM and IEEE.",
+      "description": "The post-draft lifecycle nobody else covers: CFP requirement parsing, venue/track selection and tailoring, desk-reject preflight, anonymization, review triage, benchmark scorecards, rebuttals in all three real formats, and camera-ready rails for ACM and IEEE.",
       "version": "0.1.0",
       "license": "Apache-2.0",
       "keywords": ["cfp", "submission", "rebuttal", "camera-ready", "ieee", "acm", "desk-reject"],
@@ -55,6 +56,7 @@
         "./skills/triage-reviews",
         "./skills/write-rebuttal",
         "./skills/simulate-reviewers",
+        "./skills/benchmark-paper",
         "./skills/prepare-camera-ready",
         "./skills/plan-submission",
         "./skills/add-venue-profile"
