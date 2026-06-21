@@ -17,7 +17,8 @@ A consuming skill MUST:
    profile is missing.
 4. Never overwrite `profile.yml`. Only `paper-profile` writes it. Other skills
    that learn something durable append to `lessons.md` / `decisions.md`
-   instead (see paper-memory-convention.md).
+   instead (see the shared convention in
+   [paper-memory-convention.md](paper-memory-convention.md)).
 
 This keeps the profile a *speedup and a calibration*, never a gate.
 

@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <img alt="Skills: 29" src="https://img.shields.io/badge/skills-29-2f6feb.svg">
+  <img alt="Skills: 31" src="https://img.shields.io/badge/skills-31-2f6feb.svg">
   <img alt="Package: Agent Skills" src="https://img.shields.io/badge/package-Agent%20Skills-111827.svg">
   <img alt="No bundled papers" src="https://img.shields.io/badge/paper%20content-not%20bundled-green.svg">
 </p>
@@ -32,7 +32,7 @@ that full lifecycle.
 | Profile | Capture paper positioning and local lessons so later passes stay calibrated. |
 | Discover | Find papers, fetch legal open-access copies, study exemplars. |
 | Write | Draft abstracts, literature reviews, related work, and polished prose. |
-| Verify | Check BibTeX entries, duplicates, metadata mismatches, and likely fabrications. |
+| Verify | Check BibTeX entries, originality, duplicates, metadata mismatches, and likely fabrications. |
 | Submit | Parse CFPs, select venues, tailor the paper, anonymize, and run preflight checks. |
 | Respond | Triage reviews and draft rebuttals for common response formats. |
 | Publish | Prepare camera-ready checklists and final-file linting. |
@@ -160,6 +160,14 @@ Set up my paper profile and remember the constraints for this submission.
 Reflect on this rewrite and tell me if it actually improved.
 ```
 
+```text
+Check this draft for plagiarism, self-plagiarism, and text recycling.
+```
+
+```text
+Assess my paper and give me one overall paper health report.
+```
+
 For venue-aware skills, provide a local venue profile or ask the agent to
 create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 
@@ -204,10 +212,12 @@ create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 | `tailor-to-venue` | Plan retargeting, page cuts, template changes, and anonymization. |
 | `preflight-check` | Run deterministic desk-reject checks before submission. |
 | `anonymize-paper` | Sweep double-blind leaks and support camera-ready reversal. |
+| `check-originality` | Check plagiarism, self-plagiarism, text recycling, and close paraphrase risk. |
 | `triage-reviews` | Turn raw reviews into a priority matrix. |
 | `write-rebuttal` | Draft responses for OpenReview, one-page PDFs, and R&R cycles. |
 | `simulate-reviewers` | Run a venue-calibrated mock review with strengths, weaknesses, and fix priorities. |
 | `benchmark-paper` | Score venue-fit conformance against recent award-winning or top-cited papers. |
+| `assess-paper` | Combine compliance, integrity, citation, benchmark, and mock-review checks into one paper health report. |
 | `prepare-camera-ready` | Walk accepted papers through final-file requirements. |
 | `plan-submission` | Build a backwards timeline from submission deadlines. |
 | `add-venue-profile` | Create a local venue profile from a live CFP. |
@@ -240,14 +250,15 @@ logging durable lessons.
 ### Benchmark And Align
 
 ```text
-preflight-check -> benchmark-paper -> simulate-reviewers -> match-style
+preflight-check -> verify-citations -> check-originality -> benchmark-paper -> simulate-reviewers -> assess-paper
 ```
 
 Use this path when the paper is structurally close and you want sharper
-submission readiness signals. `benchmark-paper` produces a conformance
-scorecard against venue exemplars, `simulate-reviewers` finds strengths and
-risks to preserve or fix, and `match-style` aligns the prose to the author's
-own voice or the venue register without changing claims.
+submission readiness signals. `check-originality` catches plagiarism and
+self-recycling risk, `benchmark-paper` produces a conformance scorecard
+against venue exemplars, `simulate-reviewers` finds strengths and risks to
+preserve or fix, and `assess-paper` merges the results into one readable health
+report.
 
 ### Two-Pass Reflection
 
@@ -322,7 +333,7 @@ skill instructions to decide when and how to run them.
 ## Repository Layout
 
 ```text
-skills/                         29 agent skills
+skills/                         31 agent skills
   <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance
   <skill>/scripts/               deterministic helper scripts

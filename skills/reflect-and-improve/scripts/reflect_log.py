@@ -67,9 +67,13 @@ LESSONS_HEADER = (
 )
 
 # Matches a lesson line written by `_fmt_lesson`. Tolerant of hand-edits.
+# `issue` is greedy and `rec` forbids an internal "->" so the split lands on
+# the LAST "->": issues may themselves contain "->" (e.g. "A -> B mapping is
+# unclear") without corrupting the parse or the dedupe key.
 _LESSON_RE = re.compile(
     r"^- \[(?P<date>\d{4}-\d{2}-\d{2})\] \((?P<skill>[^|]+?)\s*\|\s*"
-    r"(?P<scope>this-paper|recurring)\)\s*(?P<issue>.+?)\s*->\s*(?P<rec>.+?)\s*$"
+    r"(?P<scope>this-paper|recurring)\)\s*(?P<issue>.+)\s*->\s*"
+    r"(?P<rec>(?:(?!\s*->\s*).)+?)\s*$"
 )
 
 
@@ -133,7 +137,10 @@ def _read_lessons(mem: str) -> list[dict]:
             if not m:
                 continue
             d = m.groupdict()
-            d["skill"] = d["skill"].strip()
+            # The greedy `issue` group can keep trailing space before "->";
+            # strip every field so display, storage, and dedupe stay clean.
+            for k in ("skill", "issue", "rec"):
+                d[k] = d[k].strip()
             out.append(d)
     return out
 
