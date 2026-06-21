@@ -1,9 +1,9 @@
 <h1 align="center">Research Paper Lifecycle Skills</h1>
 
 <p align="center">
-  Agent skills for getting a research paper from CFP to camera-ready:
-  search, citations, abstracts, venue tailoring, preflight checks,
-  rebuttals, final files, talks, Q&A, and posters.
+  Agent skills for getting a research paper from CFP to camera-ready.
+  Search, cite, tailor, submit, rebut, publish, and present with less
+  deadline panic.
 </p>
 
 <p align="center">
@@ -15,10 +15,17 @@
 
 ---
 
-## What This Gives You
+## Why This Exists
 
-Most paper-assistant tools focus on drafting. This package covers the
-submission and publication mechanics around the draft:
+Drafting is only one part of publishing a paper. The surrounding mechanics are
+where researchers lose time: CFP requirements, page limits, anonymization,
+rebuttals, camera-ready forms, talk slots, poster dimensions, and citation
+cleanup.
+
+`research-paper-lifecycle-skills` gives your agent a structured playbook for
+that full lifecycle.
+
+## At A Glance
 
 | Stage | What the skills help with |
 |---|---|
@@ -30,17 +37,9 @@ submission and publication mechanics around the draft:
 | Publish | Prepare camera-ready checklists and final-file linting. |
 | Present | Build talks, scripts, Q&A drills, and posters. |
 
-This is a clean release package. It ships the skills and supporting scripts
-only. It does not ship venue databases, eval fixtures, examples, internal
-research notes, launch plans, cached metadata, PDFs, paper text, abstracts, or
-generated artifacts.
-
-When a skill needs a venue profile, create one locally with `parse-cfp` or
-`add-venue-profile`, or point the skill at your own local profile.
-
 ---
 
-## Install
+## Quick Start
 
 ### Agent Skills CLI
 
@@ -50,7 +49,7 @@ For Codex, Cursor, Gemini CLI, and compatible agents:
 npx skills add ShaishavMaisuria/research-paper-lifecycle-skills
 ```
 
-List the skills before installing:
+See what is included:
 
 ```bash
 npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --list
@@ -60,6 +59,12 @@ Install a single skill:
 
 ```bash
 npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --skill preflight-check
+```
+
+Install globally:
+
+```bash
+npx skills add ShaishavMaisuria/research-paper-lifecycle-skills -g
 ```
 
 ### Claude Code Plugin
@@ -78,9 +83,32 @@ paper-submission
 paper-presenting
 ```
 
+## Usage Examples
+
+Once installed, ask your agent for the workflow you need:
+
+```text
+Run a preflight check on my LaTeX paper for this CFP.
+```
+
+```text
+Verify this refs.bib file and flag fabricated or mismatched citations.
+```
+
+```text
+Turn these reviews into a rebuttal plan with severity and effort.
+```
+
+```text
+Make a 12-minute talk script from this deck and give me a cut list.
+```
+
+For venue-aware skills, provide a local venue profile or ask the agent to
+create one from the live CFP with `parse-cfp` or `add-venue-profile`.
+
 ---
 
-## Skill Map
+## Available Skills
 
 ### Paper Search
 
@@ -128,7 +156,7 @@ paper-presenting
 
 ---
 
-## Example Workflows
+## Common Workflows
 
 ### Before Submission
 
@@ -159,7 +187,22 @@ Use this path for final-file requirements, presentation prep, timing, and Q&A.
 
 ---
 
-## Design Principles
+## How Skills Are Structured
+
+Each skill is self-contained:
+
+| Path | Contents |
+|---|---|
+| `SKILL.md` | Trigger description, workflow instructions, output expectations, guardrails. |
+| `references/` | Supporting checklists, rubrics, conventions, and examples. |
+| `scripts/` | Deterministic helper scripts for linting, checking, parsing, timing, or validation. |
+
+The helper scripts are designed to do the mechanical work; the agent uses the
+skill instructions to decide when and how to run them.
+
+---
+
+## Project Principles
 
 | Principle | What it means |
 |---|---|
@@ -167,15 +210,15 @@ Use this path for final-file requirements, presentation prep, timing, and Q&A.
 | Citation-aware | Writing workflows route new references through verification. |
 | Copyright-conscious | Paper content is fetched only from legal open sources, on demand. |
 | Venue-skeptical | Profiles and CFP facts can go stale; final rules must be checked live. |
-| Release-safe | This package intentionally avoids internal notes, fixture PDFs, venue databases, and cached metadata. |
+| Lightweight | The repository ships skills and scripts, not paper PDFs or cached metadata. |
 
 ---
 
 ## Repository Layout
 
 ```text
-skills/                         24 Agent Skills
-  <skill>/SKILL.md               skill instructions
+skills/                         24 agent skills
+  <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance
   <skill>/scripts/               deterministic helper scripts
 .claude-plugin/marketplace.json  plugin bundle manifest
