@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <img alt="Skills: 27" src="https://img.shields.io/badge/skills-27-2f6feb.svg">
+  <img alt="Skills: 29" src="https://img.shields.io/badge/skills-29-2f6feb.svg">
   <img alt="Package: Agent Skills" src="https://img.shields.io/badge/package-Agent%20Skills-111827.svg">
   <img alt="No bundled papers" src="https://img.shields.io/badge/paper%20content-not%20bundled-green.svg">
 </p>
@@ -29,6 +29,7 @@ that full lifecycle.
 
 | Stage | What the skills help with |
 |---|---|
+| Profile | Capture paper positioning and local lessons so later passes stay calibrated. |
 | Discover | Find papers, fetch legal open-access copies, study exemplars. |
 | Write | Draft abstracts, literature reviews, related work, and polished prose. |
 | Verify | Check BibTeX entries, duplicates, metadata mismatches, and likely fabrications. |
@@ -151,12 +152,27 @@ Make this section match the voice of my previous papers without changing any
 claims or citations.
 ```
 
+```text
+Set up my paper profile and remember the constraints for this submission.
+```
+
+```text
+Reflect on this rewrite and tell me if it actually improved.
+```
+
 For venue-aware skills, provide a local venue profile or ask the agent to
 create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 
 ---
 
 ## Available Skills
+
+### Paper Intelligence
+
+| Skill | Use it when you need to... |
+|---|---|
+| `paper-profile` | Capture paper positioning, risk appetite, target venues, and writing preferences in local `.paper-memory/`. |
+| `reflect-and-improve` | Critique a generated artifact, check whether it measurably improved, and append durable local lessons. |
 
 ### Paper Search
 
@@ -208,6 +224,18 @@ create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 ---
 
 ## Common Workflows
+
+### Profile And Improve
+
+```text
+paper-profile -> polish-prose / preflight-check / simulate-reviewers -> reflect-and-improve
+```
+
+Use this path when you want the toolkit to remember paper-specific context
+across repeated passes. `paper-profile` creates a local `.paper-memory/`
+directory in the user's paper workspace, and `reflect-and-improve` checks
+whether a rewrite or fix actually improved against a measurable target before
+logging durable lessons.
 
 ### Benchmark And Align
 
@@ -294,7 +322,7 @@ skill instructions to decide when and how to run them.
 ## Repository Layout
 
 ```text
-skills/                         27 agent skills
+skills/                         29 agent skills
   <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance
   <skill>/scripts/               deterministic helper scripts

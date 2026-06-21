@@ -51,3 +51,11 @@ A `scorecard.md` containing:
 - Corpus is fetched on demand from open-access sources, processed transiently, never stored or committed (see `study-exemplars`).
 - Never fabricate exemplar data to fill the corpus; if you can't reach N papers, score against fewer and disclose it.
 - This is a copilot signal, not a verdict. The author decides.
+
+## Memory
+
+Uses the shared `.paper-memory/` convention in the user's paper directory (full spec: [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+
+- **At start:** read `.paper-memory/profile.yml` (vertical, venue tier) to pick exemplar emphasis, and `lessons.md` to recall which dimensions were weak last run and any `recurring` gaps for this author — lead with them.
+- **At end:** append durable findings in the shared format `- [YYYY-MM-DD] (benchmark-paper | <scope>) weak-dimension -> recommendation` (via `reflect-and-improve`'s `reflect_log.py append`, which dedupes and dates). A dimension that lags exemplars across drafts is `recurring`; a one-time gap is `this-paper`. Do not log the full scorecard, only the lasting takeaways.
+- Create `.paper-memory/` on demand if absent and offer to add it to the project `.gitignore`. It is local-only; never upload it or copy it into this repo.

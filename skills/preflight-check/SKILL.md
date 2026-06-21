@@ -2,12 +2,14 @@
 name: preflight-check
 description: >-
   Deterministic desk-reject preflight linter for LaTeX paper submissions. Use
-  it when a researcher asks whether a paper is ready to submit, or mentions
+  it when a researcher asks "is my paper ready to submit", or mentions
   preflight, desk reject, submission check, page limit, anonymization,
-  double-blind, missing checklist, or format/template compliance. Lints the
-  source against a machine-readable venue profile: documentclass and style
-  options, margin/template tampering, anonymization leaks, required sections,
-  abstract length, keywords format, and page-limit risk. Runs bundled
+  double-blind, missing checklist, or format/template compliance for a
+  conference such as NeurIPS, ICML, CHI, SIGSPATIAL, SIGMOD, ICDE, CVPR, or
+  LNCS. Lints the .tex source against a machine-readable venue profile,
+  checking documentclass and style-file options, margin/template tampering,
+  anonymization leaks, required sections, abstract length, keywords format, and
+  page-limit risk, with every finding reported with file and line. Runs bundled
   stdlib-only Python scripts; advisory only, never submits anything.
 ---
 
@@ -120,3 +122,21 @@ so new disciplines need data, not code.
   most the flagged line.
 - Citation problems are out of scope here: route them through
   `verify-citations`.
+
+## Memory
+
+This skill uses the shared `.paper-memory/` convention in the user's paper
+directory (full spec: [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+
+- **At start:** read `.paper-memory/lessons.md` (and `profile.yml` for venue
+  tier / constraints). Skip re-flagging issues already recorded and acted on;
+  lead with any `recurring` desk-reject habits this author has (e.g. "you tend
+  to compress layout near the page limit").
+- **At end:** append each finding worth remembering as one dated entry in the
+  shared format `- [YYYY-MM-DD] (preflight-check | <scope>) issue ->
+  recommendation` (use `reflect-and-improve`'s `reflect_log.py append`, which
+  dedupes and dates). Tag a repeat-across-papers habit `recurring`, a one-off
+  `this-paper`.
+- Create `.paper-memory/` on demand if absent and offer to add it to the
+  project `.gitignore`. It is local-only; never upload it or copy it into this
+  repo.

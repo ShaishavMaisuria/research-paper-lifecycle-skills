@@ -146,3 +146,22 @@ action-editor + 2 reviewers and accept/minor/major/reject.
 - Never submit to, or post on, any review system on the user's behalf.
 - Format/compliance problems found along the way are out of scope — route
   them to `preflight-check`.
+
+## Memory
+
+This skill uses the shared `.paper-memory/` convention in the user's paper
+directory (full spec: [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+
+- **At start:** read `.paper-memory/profile.yml` (vertical, risk appetite,
+  venue tier) to calibrate the panel and how hard the personas press novelty
+  claims, and read `lessons.md` to recall which weaknesses were already raised
+  and which `recurring` ones this author repeats (e.g. "weak ablations" or
+  "overclaimed contributions") so the meta-review leads with them.
+- **At end:** append the durable weaknesses in the shared format `- [YYYY-MM-DD]
+  (simulate-reviewers | <scope>) weakness -> recommendation` (via
+  `reflect-and-improve`'s `reflect_log.py append`, which dedupes and dates). A
+  structural habit seen across drafts is `recurring`; a draft-specific gap is
+  `this-paper`. Do not log per-reviewer score noise.
+- Create `.paper-memory/` on demand if absent and offer to add it to the
+  project `.gitignore`. It is local-only; never upload it or copy it into this
+  repo.

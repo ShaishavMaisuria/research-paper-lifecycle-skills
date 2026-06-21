@@ -184,3 +184,22 @@ add discipline-specific tells to `prose_lint.py`'s `TELL_PATTERNS` table.
 - Never submit anything to any system on the user's behalf.
 - Quote at most the flagged line in reports; never reproduce large portions
   of the paper in outputs.
+
+## Memory
+
+This skill uses the shared `.paper-memory/` convention in the user's paper
+directory (full spec: [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+
+- **At start:** read `.paper-memory/lessons.md` and `profile.yml`. Use
+  `writing_preferences` (style signature, spelling, voice) to set the target
+  register, and lead with any `recurring` prose habits already recorded (e.g.
+  "you habitually write passive contribution statements") so you watch for
+  them first instead of re-explaining them.
+- **At end:** append durable findings in the shared format `- [YYYY-MM-DD]
+  (polish-prose | <scope>) pattern -> recommendation` (via
+  `reflect-and-improve`'s `reflect_log.py append`, which dedupes and dates). A
+  tell or habit seen across drafts is `recurring`; a one-off fix is
+  `this-paper`. Do not log routine one-shot edits.
+- Create `.paper-memory/` on demand if absent and offer to add it to the
+  project `.gitignore`. It is local-only; never upload it or copy it into this
+  repo.

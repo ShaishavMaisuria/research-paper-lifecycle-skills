@@ -49,3 +49,11 @@ This is part of the acceptance-maximizing toolkit, alongside [`polish-prose`](..
 - Style only: never alter a technical claim, number, result, or citation. Flag, don't fix, anything that would.
 - No acceptance promises. Frame outcomes as consistency and venue fit, not a guaranteed decision.
 - Respect the venue's AI-use disclosure policy (in the venue profile); never use style-matching to evade an AI-detection or disclosure requirement.
+
+## Memory
+
+Uses the shared `.paper-memory/` convention in the user's paper directory (full spec: [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+
+- **At start:** read `.paper-memory/profile.yml` — `writing_preferences` records the chosen style signature (author voice, venue register, or merged) and spelling/voice, so align to it instead of re-deciding. Read `lessons.md` for `recurring` style deviations to watch for.
+- **At end:** append durable findings in the shared format `- [YYYY-MM-DD] (match-style | <scope>) deviation -> recommendation` (via `reflect-and-improve`'s `reflect_log.py append`, which dedupes and dates); persist the resolved author-vs-venue conflicts so later runs stay consistent. Cross-draft deviations are `recurring`; one-offs are `this-paper`.
+- Create `.paper-memory/` on demand if absent and offer to add it to the project `.gitignore`. It is local-only; never upload it or copy it into this repo.

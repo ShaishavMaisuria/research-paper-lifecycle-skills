@@ -133,3 +133,22 @@ submitted paper can end a review — or a reputation. Be rigorous here.
 - [references/verification-sources.md](references/verification-sources.md) —
   provider APIs, authority order, venue aliasing, retraction data, rate
   limits and licensing.
+
+## Memory
+
+This skill uses the shared `.paper-memory/` convention in the user's paper
+directory (full spec: [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+
+- **At start:** read `.paper-memory/lessons.md` to skip re-flagging entries the
+  user already resolved this cycle, and lead with any `recurring` citation
+  habits recorded for this author (e.g. "tends to cite arXiv preprints that are
+  now published; prefer the published record").
+- **At end:** append durable findings in the shared format `- [YYYY-MM-DD]
+  (verify-citations | <scope>) issue -> recommendation` (via
+  `reflect-and-improve`'s `reflect_log.py append`, which dedupes and dates). A
+  pattern across the bibliography or across papers is `recurring`; a single
+  fixed entry is `this-paper`. Never record fabricated metadata in memory, only
+  the pattern and the canonical fix.
+- Create `.paper-memory/` on demand if absent and offer to add it to the
+  project `.gitignore`. It is local-only; never upload it or copy it into this
+  repo.
