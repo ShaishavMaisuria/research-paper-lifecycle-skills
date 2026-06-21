@@ -104,7 +104,7 @@ Ask in plain language. The right skill triggers itself.
 
 | You ask | You get |
 |---|---|
-| "Will this get desk-rejected? Check my `main.tex` against this CFP." | A preflight report with page-limit, anonymization, template, checklist, and policy risks tied to live requirements. |
+| "Will this get desk-rejected at an IEEE conference? Check my `main.tex` against this CFP." | A preflight report with IEEE template, page-limit, anonymization, checklist, and policy risks tied to live requirements. |
 | "Verify `refs.bib` and flag fabricated or mismatched citations." | Canonical-record checks across scholarly metadata sources, with duplicates and suspicious entries surfaced. |
 | "How good is my paper? One honest report." | A paper-health report with strengths first, ranked fixes, integrity gates, and no acceptance prediction. |
 | "Humanize this section but do not change any claims." | Cleaner academic prose with AI-tell phrasing removed, while numbers, results, and citations stay fixed. |
