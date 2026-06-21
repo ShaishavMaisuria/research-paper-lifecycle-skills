@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <img alt="Skills: 24" src="https://img.shields.io/badge/skills-24-2f6feb.svg">
+  <img alt="Skills: 25" src="https://img.shields.io/badge/skills-25-2f6feb.svg">
   <img alt="Package: Agent Skills" src="https://img.shields.io/badge/package-Agent%20Skills-111827.svg">
   <img alt="No bundled papers" src="https://img.shields.io/badge/paper%20content-not%20bundled-green.svg">
 </p>
@@ -43,7 +43,7 @@ that full lifecycle.
 
 ### Agent Skills CLI
 
-For Codex, Cursor, Gemini CLI, and compatible agents:
+For Codex, Cursor, Gemini CLI, Claude Code, and compatible agents:
 
 ```bash
 npx skills add ShaishavMaisuria/research-paper-lifecycle-skills
@@ -67,6 +67,15 @@ Install globally:
 npx skills add ShaishavMaisuria/research-paper-lifecycle-skills -g
 ```
 
+Install into a specific supported agent target:
+
+```bash
+npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent codex
+npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent cursor
+npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent gemini
+npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent claude-code
+```
+
 ### Claude Code Plugin
 
 ```text
@@ -81,6 +90,30 @@ paper-search
 paper-writing
 paper-submission
 paper-presenting
+```
+
+## Integrations
+
+This is an Agent Skills package, not a Claude-only prompt bundle. The
+repository ships portable `SKILL.md` folders plus optional scripts and
+references, so any agent that understands the Agent Skills format can use it.
+Install with the Agent Skills CLI when possible, or copy individual skill
+folders into another agent's documented skills directory.
+
+| Environment | Install path |
+|---|---|
+| Codex | `npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent codex` |
+| Cursor | `npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent cursor` |
+| Gemini CLI | `npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent gemini` |
+| Claude Code | `npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent claude-code` or `/plugin install ...` |
+| Any compatible agent | `npx skills add ShaishavMaisuria/research-paper-lifecycle-skills` |
+| No install / one-off use | `npx skills use ShaishavMaisuria/research-paper-lifecycle-skills@reflect-paper` |
+
+Manual install for tools that expose their own skills directory:
+
+```bash
+mkdir -p "$YOUR_AGENT_SKILLS_DIR"
+cp -R skills/reflect-paper "$YOUR_AGENT_SKILLS_DIR/"
 ```
 
 ## Usage Examples
@@ -103,6 +136,11 @@ Turn these reviews into a rebuttal plan with severity and effort.
 Make a 12-minute talk script from this deck and give me a cut list.
 ```
 
+```text
+Run a Researcher pass and Writer pass on this draft, then merge the feedback
+into a revision plan.
+```
+
 For venue-aware skills, provide a local venue profile or ask the agent to
 create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 
@@ -123,6 +161,7 @@ create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 
 | Skill | Use it when you need to... |
 |---|---|
+| `reflect-paper` | Run a Researcher pass and Writer pass, then merge both into a revision plan. |
 | `write-abstract` | Draft, rewrite, lint, or register a venue-aware abstract. |
 | `literature-review` | Build a structured, citation-grounded review. |
 | `draft-related-work` | Position related work against verified references. |
@@ -157,6 +196,20 @@ create one from the live CFP with `parse-cfp` or `add-venue-profile`.
 ---
 
 ## Common Workflows
+
+### Two-Pass Reflection
+
+```text
+reflect-paper -> verify-citations -> polish-prose / tailor-to-venue
+```
+
+Use this path when you want separate Researcher and Writer perspectives. When
+the runtime supports delegated agents, `reflect-paper` asks for one Researcher
+worker and one Writer worker; otherwise it runs the same passes sequentially.
+The Researcher pass checks technical truth, evidence, citations, venue fit, and
+reviewer risk. The Writer pass checks framing, structure, abstract, related
+work, prose, tables, and figures. The skill merges both into one prioritized
+revision plan.
 
 ### Before Submission
 
@@ -217,7 +270,7 @@ skill instructions to decide when and how to run them.
 ## Repository Layout
 
 ```text
-skills/                         24 agent skills
+skills/                         25 agent skills
   <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance
   <skill>/scripts/               deterministic helper scripts

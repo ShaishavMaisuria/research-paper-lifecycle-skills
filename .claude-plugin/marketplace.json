@@ -26,11 +26,12 @@
     {
       "name": "paper-writing",
       "source": "./",
-      "description": "Venue-aware academic writing: abstracts, related work, literature reviews, and prose polish grounded in verified citations.",
+      "description": "Venue-aware academic writing: reflection passes, abstracts, related work, literature reviews, and prose polish grounded in verified citations.",
       "version": "0.1.0",
       "license": "Apache-2.0",
       "keywords": ["academic-writing", "abstract", "latex", "literature-review"],
       "skills": [
+        "./skills/reflect-paper",
         "./skills/write-abstract",
         "./skills/literature-review",
         "./skills/draft-related-work",
