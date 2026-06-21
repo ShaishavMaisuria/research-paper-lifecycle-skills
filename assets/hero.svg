@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" role="img" aria-label="research-paper-lifecycle-skills — from idea to camera-ready">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e1b4b"/>
+      <stop offset="0.55" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#082f49"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .title { font-size: 52px; font-weight: 800; fill: #f8fafc; letter-spacing: -1px; }
+      .tag   { font-size: 22px; font-weight: 500; fill: #cbd5e1; }
+      .chip  { font-size: 17px; font-weight: 600; fill: #e2e8f0; }
+      .arrow { fill: #475569; }
+      .stat  { font-size: 16px; font-weight: 600; fill: #94a3b8; }
+      .statn { font-size: 16px; font-weight: 800; fill: #38bdf8; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="340" rx="18" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="6" rx="3" fill="url(#accent)"/>
+
+  <text x="60" y="92" class="title">research-paper-lifecycle-skills</text>
+  <text x="62" y="132" class="tag">From idea to camera-ready — your AI copilot for the whole publishing lifecycle.</text>
+
+  <!-- lifecycle pipeline -->
+  <g transform="translate(60,185)">
+    <g>
+      <rect x="0" y="0" width="150" height="46" rx="23" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Idea</text>
+    </g>
+    <text x="162" y="30" class="arrow" font-size="22">→</text>
+    <g transform="translate(184,0)">
+      <rect x="0" y="0" width="150" height="46" rx="23" fill="#1e3a5f" stroke="#0ea5e9" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Write</text>
+    </g>
+    <text x="346" y="30" class="arrow" font-size="22">→</text>
+    <g transform="translate(368,0)">
+      <rect x="0" y="0" width="150" height="46" rx="23" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Verify</text>
+    </g>
+    <text x="530" y="30" class="arrow" font-size="22">→</text>
+    <g transform="translate(552,0)">
+      <rect x="0" y="0" width="150" height="46" rx="23" fill="#164e63" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Submit</text>
+    </g>
+    <text x="714" y="30" class="arrow" font-size="22">→</text>
+    <g transform="translate(736,0)">
+      <rect x="0" y="0" width="150" height="46" rx="23" fill="#155e75" stroke="#67e8f9" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Rebut</text>
+    </g>
+    <text x="898" y="30" class="arrow" font-size="22">→</text>
+    <g transform="translate(920,0)">
+      <rect x="0" y="0" width="160" height="46" rx="23" fill="#134e4a" stroke="#2dd4bf" stroke-width="1.5"/>
+      <text x="80" y="29" text-anchor="middle" class="chip">Present</text>
+    </g>
+  </g>
+
+  <!-- stat strip -->
+  <g transform="translate(62,288)">
+    <text x="0" y="0" class="statn">41</text><text x="28" y="0" class="stat">skills</text>
+    <text x="120" y="0" class="statn">0</text><text x="138" y="0" class="stat">bundled papers</text>
+    <text x="300" y="0" class="statn">live</text><text x="338" y="0" class="stat">citation checks</text>
+    <text x="560" y="0" class="statn">local</text><text x="608" y="0" class="stat">paper workspace</text>
+    <text x="820" y="0" class="stat">Apache-2.0 · Agent Skills</text>
+  </g>
+</svg>

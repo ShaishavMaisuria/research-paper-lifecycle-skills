@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 520" role="img" aria-label="The research-paper lifecycle and the skills at each stage">
+  <defs>
+    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#2dd4bf"/>
+    </linearGradient>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .h    { font-size: 24px; font-weight: 800; fill: #0f172a; }
+      .cond { font-size: 15px; font-weight: 700; fill: #f8fafc; }
+      .condl{ font-size: 13px; font-weight: 600; fill: #c7d2fe; }
+      .stage{ font-size: 15px; font-weight: 800; fill: #ffffff; }
+      .skill{ font-size: 13px; font-weight: 500; fill: #334155; }
+      .note { font-size: 12.5px; font-weight: 500; fill: #64748b; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="520" fill="#ffffff"/>
+  <text x="40" y="46" class="h">How it works — one skill fires at each step, facts are verified live</text>
+
+  <!-- Conductor / intelligence band -->
+  <rect x="40" y="66" width="1200" height="64" rx="12" fill="#312e81"/>
+  <rect x="40" y="66" width="6" height="64" rx="3" fill="url(#accent2)"/>
+  <text x="64" y="92" class="cond">Conductor &amp; intelligence layer</text>
+  <text x="64" y="114" class="condl">orchestrate-paper · assess-paper · paper-profile · reflect-paper · reflect-and-improve · render-workspace-html · local .paper-memory/</text>
+
+  <!-- 7 stage columns -->
+  <!-- col geometry: x start 40, 7 cols width ~164, gap 8 -->
+  <g>
+    <!-- Search -->
+    <rect x="40" y="156" width="164" height="34" rx="8" fill="#4f46e5"/>
+    <text x="122" y="178" text-anchor="middle" class="stage">Search &amp; read</text>
+    <rect x="40" y="194" width="164" height="150" rx="8" fill="#eef2ff"/>
+    <text x="54" y="218" class="skill">find-papers</text>
+    <text x="54" y="240" class="skill">fetch-paper</text>
+    <text x="54" y="262" class="skill">study-exemplars</text>
+    <text x="54" y="284" class="skill">literature-review</text>
+
+    <!-- Write -->
+    <rect x="212" y="156" width="164" height="34" rx="8" fill="#4338ca"/>
+    <text x="294" y="178" text-anchor="middle" class="stage">Write</text>
+    <rect x="212" y="194" width="164" height="164" rx="8" fill="#eef2ff"/>
+    <text x="226" y="216" class="skill">write-abstract</text>
+    <text x="226" y="238" class="skill">draft-related-work</text>
+    <text x="226" y="260" class="skill">polish-prose</text>
+    <text x="226" y="282" class="skill">match-style</text>
+    <text x="226" y="304" class="skill">refactor-structure</text>
+    <text x="226" y="326" class="skill">fit-page-limit</text>
+    <text x="226" y="348" class="skill">work-with-overleaf</text>
+
+    <!-- Verify -->
+    <rect x="384" y="156" width="164" height="34" rx="8" fill="#0369a1"/>
+    <text x="466" y="178" text-anchor="middle" class="stage">Verify</text>
+    <rect x="384" y="194" width="164" height="150" rx="8" fill="#e0f2fe"/>
+    <text x="398" y="218" class="skill">verify-citations</text>
+    <text x="398" y="240" class="skill">check-originality</text>
+    <text x="398" y="262" class="skill">verify-claims</text>
+    <text x="398" y="284" class="skill">preflight-check</text>
+
+    <!-- Submit -->
+    <rect x="556" y="156" width="164" height="34" rx="8" fill="#0284c7"/>
+    <text x="638" y="178" text-anchor="middle" class="stage">Submit</text>
+    <rect x="556" y="194" width="164" height="150" rx="8" fill="#e0f2fe"/>
+    <text x="570" y="218" class="skill">parse-cfp</text>
+    <text x="570" y="240" class="skill">select-venue</text>
+    <text x="570" y="262" class="skill">tailor-to-venue</text>
+    <text x="570" y="284" class="skill">anonymize-paper</text>
+    <text x="570" y="306" class="skill">plan-submission</text>
+
+    <!-- Rebut -->
+    <rect x="728" y="156" width="164" height="34" rx="8" fill="#0891b2"/>
+    <text x="810" y="178" text-anchor="middle" class="stage">Review &amp; rebut</text>
+    <rect x="728" y="194" width="164" height="150" rx="8" fill="#ecfeff"/>
+    <text x="742" y="218" class="skill">triage-reviews</text>
+    <text x="742" y="240" class="skill">write-rebuttal</text>
+    <text x="742" y="262" class="skill">simulate-reviewers</text>
+    <text x="742" y="284" class="skill">benchmark-paper</text>
+
+    <!-- Camera-ready / artifacts -->
+    <rect x="900" y="156" width="164" height="34" rx="8" fill="#0d9488"/>
+    <text x="982" y="178" text-anchor="middle" class="stage">Camera-ready</text>
+    <rect x="900" y="194" width="164" height="150" rx="8" fill="#f0fdfa"/>
+    <text x="914" y="218" class="skill">prepare-camera-ready</text>
+    <text x="914" y="240" class="skill">verify-results</text>
+    <text x="914" y="262" class="skill">test-research-code</text>
+    <text x="914" y="284" class="skill">prepare-artifacts</text>
+    <text x="914" y="306" class="skill">refactor-research-code</text>
+
+    <!-- Present -->
+    <rect x="1072" y="156" width="168" height="34" rx="8" fill="#0f766e"/>
+    <text x="1156" y="178" text-anchor="middle" class="stage">Present</text>
+    <rect x="1072" y="194" width="168" height="150" rx="8" fill="#f0fdfa"/>
+    <text x="1086" y="218" class="skill">make-slides</text>
+    <text x="1086" y="240" class="skill">write-talk-script</text>
+    <text x="1086" y="262" class="skill">rehearse-qa</text>
+    <text x="1086" y="284" class="skill">make-poster</text>
+  </g>
+
+  <!-- package layer -->
+  <rect x="40" y="372" width="1200" height="54" rx="12" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="64" y="396" class="stage" fill="#0f172a">Portable package →</text>
+  <text x="220" y="396" class="note">skills/ — self-contained SKILL.md folders with references/ and deterministic scripts; install the whole package or one skill.</text>
+  <text x="220" y="416" class="note">Venue facts are checked live by the relevant skill; user paper outputs stay in local paper-workspace/ and .paper-memory/.</text>
+
+  <text x="40" y="466" class="note">Each SKILL.md tells the agent what it does and when to fire; bundled Python scripts run the deterministic checks (page count, anonymization lint, DOI resolution).</text>
+  <text x="40" y="490" class="note">Copilot, not pilot — skills draft, check, and explain; you decide, you stay the author, and nothing is ever submitted on your behalf.</text>
+</svg>

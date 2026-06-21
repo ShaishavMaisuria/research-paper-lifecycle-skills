@@ -139,6 +139,22 @@ fact here becomes someone else's desk reject. Accuracy beats completeness.
 - Re-verify against the live CFP anything the user is about to rely on, and
   say so in the final answer.
 
+## Source verification
+
+This skill creates venue rule data, so source verification is mandatory:
+
+- Build the profile on demand for the venue and year the user chose. Never
+  reuse a remembered or prior-year value without re-checking it.
+- Search for and open the live CFP or author-instructions page. Search results,
+  snippets, and deadline aggregators are leads only; confirm facts on an
+  official venue source before recording them.
+- Double-check desk-reject-class facts when possible: deadline, page limit and
+  exclusions, blind level, template, and submission system. If sources conflict,
+  surface the conflict instead of choosing silently.
+- Record a clickable source URL and date for every critical fact in the
+  `verified:` provenance block. Use `needs-verification` for anything missing a
+  source; an unsourced fact cannot be treated as final.
+
 ## Bundled files
 
 - [references/profile-walkthrough.md](references/profile-walkthrough.md) —

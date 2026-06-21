@@ -30,6 +30,16 @@ This is **opt-in**: offer it when a visual overview would genuinely help (after 
 
 `paper-workspace/dashboard.html` — a stage-by-stage progress bar, artifact cards with links to each output, and a recent-activity timeline from `INDEX.md`. Opens offline in any browser.
 
+## Richer reports
+
+This skill is built for speed and zero dependencies: one self-contained
+`dashboard.html` that works offline and can be refreshed repeatedly. If the
+author asks for a more designed or interactive report, and the current agent
+runtime has a separate web artifact, frontend, or report-building skill
+installed, offer to hand the workspace summary to that tool. Keep this
+dashboard as the default status view; use richer builders only when the author
+asks for presentation-grade HTML.
+
 ## Guardrails
 
 - **Local only.** The dashboard is a local file built from local artifacts; never upload it, host it, or copy it into this skills repo. No third-party paper content is rendered (only the author's own outputs).

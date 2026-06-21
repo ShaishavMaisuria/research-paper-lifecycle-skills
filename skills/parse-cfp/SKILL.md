@@ -112,6 +112,22 @@ Downstream consumers: `preflight-check`, `tailor-to-venue`, `write-rebuttal`,
   `.cache/` and stays out of git — do not commit fetched CFP text to the repo.
 - Always include the re-verify-against-live-CFP notice in the final answer.
 
+## Source verification
+
+This skill originates venue facts, so source verification is mandatory:
+
+- Build the venue rules on demand for the venue and year the user chose. Never
+  rely on memory or a prior-year value without re-checking it.
+- Search for and open the live CFP or author-instructions page. Search results,
+  snippets, and deadline aggregators are leads only; confirm facts on an
+  official venue source before recording them.
+- Double-check desk-reject-class facts when possible: deadline, page limit and
+  exclusions, blind level, template, and submission system. If sources conflict,
+  surface the conflict instead of choosing silently.
+- Record a clickable source URL and date for every critical fact in the
+  profile's provenance. A fact without a source is emitted as unverified, never
+  asserted as final.
+
 ## Bundled files
 
 - [references/extraction-guide.md](references/extraction-guide.md) —
