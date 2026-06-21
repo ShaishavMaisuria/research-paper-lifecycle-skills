@@ -309,6 +309,7 @@ skills/                         41 agent skills
   <skill>/references/            supporting guidance
   <skill>/scripts/               deterministic helper scripts
 .claude-plugin/marketplace.json  optional Claude Code plugin bundle metadata
+.github/workflows/              public package validation workflow
 LICENSE                          Apache-2.0 license
 NOTICE                           attribution notice
 CITATION.cff                     citation metadata

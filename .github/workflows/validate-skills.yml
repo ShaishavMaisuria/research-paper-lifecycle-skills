@@ -1,0 +1,79 @@
+# Validate the released skill package without extra repository tooling.
+# The check is inline and stdlib-only so forks can run it as-is.
+name: validate-skills
+
+on:
+  push:
+    paths:
+      - "skills/**"
+      - ".claude-plugin/marketplace.json"
+      - ".github/workflows/validate-skills.yml"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate SKILL.md frontmatter + marketplace skill paths
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, re, sys
+          root = pathlib.Path(".")
+          errs = []
+
+          def frontmatter(text):
+              if not text.startswith("---"): return None
+              end = text.find("\n---", 3)
+              if end == -1: return None
+              data, cur = {}, None
+              for line in text[3:end].splitlines():
+                  m = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", line)
+                  if m and not line.startswith((" ", "\t")):
+                      cur = m.group(1); v = m.group(2).strip()
+                      if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"": v = v[1:-1]
+                      data[cur] = v
+                  elif cur and line.strip():
+                      data[cur] = (data[cur] + " " + line.strip()).strip()
+              return data
+
+          skills_dir = root / "skills"
+          n = 0
+          for d in sorted(p for p in skills_dir.iterdir() if p.is_dir()) if skills_dir.is_dir() else []:
+              n += 1
+              md = d / "SKILL.md"
+              if not md.is_file():
+                  errs.append(f"{d.name}: missing SKILL.md"); continue
+              fm = frontmatter(md.read_text(encoding="utf-8"))
+              if not fm:
+                  errs.append(f"{d.name}: no valid --- frontmatter"); continue
+              name = fm.get("name", "")
+              if name != d.name:
+                  errs.append(f"{d.name}: frontmatter name '{name}' != directory")
+              if not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", name or ""):
+                  errs.append(f"{d.name}: name must be lowercase-hyphen")
+              if any(b in name for b in ("claude", "anthropic")):
+                  errs.append(f"{d.name}: name contains a reserved word")
+              desc = fm.get("description", "")
+              if not desc:
+                  errs.append(f"{d.name}: missing description")
+              elif len(desc) > 1024:
+                  errs.append(f"{d.name}: description {len(desc)} chars (max 1024)")
+
+          mf = root / ".claude-plugin" / "marketplace.json"
+          if mf.is_file():
+              data = json.loads(mf.read_text(encoding="utf-8"))
+              for p in data.get("plugins", []):
+                  for s in p.get("skills", []):
+                      if not (root / s.lstrip("./") / "SKILL.md").is_file():
+                          errs.append(f"marketplace plugin '{p.get('name')}': '{s}' has no SKILL.md")
+
+          for e in errs:
+              print("ERROR", e)
+          print(f"\nchecked {n} skills: {len(errs)} errors")
+          sys.exit(1 if errs else 0)
+          PY
