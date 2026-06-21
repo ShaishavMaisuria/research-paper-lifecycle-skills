@@ -96,4 +96,8 @@ npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --list --full-de
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](LICENSE).
+
+If you redistribute this package or include substantial portions of these
+skills in another repository, keep the copyright/license notices and the
+[NOTICE](NOTICE) attribution file so the original work is credited.

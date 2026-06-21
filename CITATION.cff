@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use these research-paper lifecycle skills, please cite or credit this repository."
+title: "research-paper-lifecycle-skills"
+authors:
+  - family-names: "Maisuria"
+    given-names: "Shaishav"
+repository-code: "https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills"
+license: "Apache-2.0"
+date-released: "2026-06-21"

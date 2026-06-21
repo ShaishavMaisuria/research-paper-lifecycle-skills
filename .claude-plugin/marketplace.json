@@ -14,7 +14,7 @@
       "source": "./",
       "description": "Key-free scholarly search and legal open-access fetching: DBLP, Crossref, Semantic Scholar, arXiv, Unpaywall — plus citation verification and exemplar study.",
       "version": "0.1.0",
-      "license": "MIT",
+      "license": "Apache-2.0",
       "keywords": ["research", "arxiv", "dblp", "semantic-scholar", "citations"],
       "skills": [
         "./skills/find-papers",
@@ -28,7 +28,7 @@
       "source": "./",
       "description": "Venue-aware academic writing: abstracts, related work, literature reviews, and prose polish grounded in verified citations.",
       "version": "0.1.0",
-      "license": "MIT",
+      "license": "Apache-2.0",
       "keywords": ["academic-writing", "abstract", "latex", "literature-review"],
       "skills": [
         "./skills/write-abstract",
@@ -43,7 +43,7 @@
       "source": "./",
       "description": "The post-draft lifecycle nobody else covers: CFP requirement parsing, venue/track selection and tailoring, desk-reject preflight, anonymization, review triage, rebuttals in all three real formats, and camera-ready rails for ACM and IEEE.",
       "version": "0.1.0",
-      "license": "MIT",
+      "license": "Apache-2.0",
       "keywords": ["cfp", "submission", "rebuttal", "camera-ready", "ieee", "acm", "desk-reject"],
       "skills": [
         "./skills/parse-cfp",
@@ -64,7 +64,7 @@
       "source": "./",
       "description": "From accepted paper to the podium: slide decks, talk scripts timed to the exact slot, Q&A rehearsal, and venue-sized posters.",
       "version": "0.1.0",
-      "license": "MIT",
+      "license": "Apache-2.0",
       "keywords": ["slides", "talk", "poster", "presentation", "conference"],
       "skills": [
         "./skills/make-slides",
