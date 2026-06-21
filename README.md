@@ -303,7 +303,7 @@ outputs only.
 ## Repository layout
 
 ```text
-assets/                         README visuals
+assets/                         README and community visuals
 skills/                         41 agent skills
   <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance

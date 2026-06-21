@@ -1,10 +1,28 @@
-# Security Policy
+<p align="center">
+  <img src="assets/community-security.svg" alt="Security policy - private report to fix" width="100%">
+</p>
 
-## Supported versions
+<h1 align="center">Security Policy</h1>
+
+<p align="center">
+  <b>Report vulnerabilities privately and protect drafts, credentials, unpublished research, and release workflows.</b>
+</p>
+
+<p align="center">
+  <sub>
+    <a href="CODE_OF_CONDUCT.md">Code of Conduct</a> ·
+    <a href="CONTRIBUTING.md">Contributing</a> ·
+    <a href="README.md">README</a>
+  </sub>
+</p>
+
+---
+
+## Supported Versions
 
 Security fixes apply to the current `main` branch of this repository.
 
-## Reporting a vulnerability
+## Report Privately
 
 Please do not open a public issue for security reports.
 
@@ -14,11 +32,13 @@ sharing sensitive details.
 
 Useful reports include:
 
-- A short description of the issue and impact.
-- Steps to reproduce.
-- Affected files, skills, or scripts.
-- Any logs or proof-of-concept details that do not expose secrets.
-- Suggested mitigations, if you have them.
+| Include | Notes |
+|---|---|
+| Short description | What can go wrong and who is affected. |
+| Steps to reproduce | Use minimal public-safe examples. |
+| Affected files | Skills, scripts, workflows, package metadata, or docs. |
+| Logs or proof of concept | Remove secrets, private drafts, and credentials. |
+| Suggested mitigation | Optional, but helpful. |
 
 ## Scope
 
@@ -30,6 +50,8 @@ In scope:
 - Install or packaging behavior that could execute unexpected code.
 - Prompt or skill behavior that could encourage unsafe handling of private
   research data.
+- Citation, fetch, or workspace helpers that write data outside the expected
+  local project area.
 
 Out of scope:
 
@@ -39,7 +61,9 @@ Out of scope:
   a concrete impact.
 - Claims that require redistributing copyrighted paper content to reproduce.
 
-## Handling expectations
+## Handling Expectations
 
 The maintainer will acknowledge valid reports when possible, investigate the
 impact, and publish a fix or mitigation before encouraging public disclosure.
+
+Please give the maintainer time to patch before sharing details publicly.

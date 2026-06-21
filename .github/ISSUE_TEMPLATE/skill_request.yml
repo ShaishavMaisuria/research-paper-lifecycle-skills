@@ -6,8 +6,10 @@ body:
   - type: markdown
     attributes:
       value: |
-        Describe the research workflow, not private paper content. Keep examples
-        public-safe and avoid copyrighted source text.
+        ## Skill or workflow request
+
+        Describe the research workflow, not private paper content. Keep
+        examples public-safe and avoid copyrighted source text.
   - type: dropdown
     id: request_type
     attributes:
@@ -44,3 +46,10 @@ body:
     attributes:
       label: Useful checks or guardrails
       description: List deterministic checks, policy boundaries, or failure modes.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Release scope
+      options:
+        - label: This request can be implemented without shipping private evals, benchmark fixtures, generated caches, or copyrighted paper content.
+          required: true

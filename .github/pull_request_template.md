@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ShaishavMaisuria/research-paper-lifecycle-skills/main/assets/community-templates.svg" alt="Issue and pull request templates" width="100%">
+</p>
+
 ## Summary
 
 - 

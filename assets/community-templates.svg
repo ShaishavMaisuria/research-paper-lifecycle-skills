@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 330" role="img" aria-label="Issue and pull request templates">
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="0.5" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .title { font-size: 40px; font-weight: 800; fill: #111827; }
+      .tag { font-size: 18px; font-weight: 500; fill: #475569; }
+      .label { font-size: 16px; font-weight: 800; fill: #111827; }
+      .body { font-size: 13px; font-weight: 500; fill: #64748b; }
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="328" rx="18" fill="url(#card)" stroke="#e2e8f0" stroke-width="1.5"/>
+  <rect x="28" y="0" width="1144" height="5" rx="2.5" fill="url(#bar)"/>
+
+  <text x="58" y="78" class="title">Issue and PR Templates</text>
+  <text x="58" y="112" class="tag">Structured reports keep public releases reviewable, safe, and fast to merge.</text>
+
+  <g transform="translate(58,164)">
+    <rect width="240" height="94" rx="12" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="24" y="36" class="label">Bug report</text>
+    <text x="24" y="62" class="body">Area, repro steps, output,</text>
+    <text x="24" y="80" class="body">and environment.</text>
+  </g>
+  <g transform="translate(328,164)">
+    <rect width="240" height="94" rx="12" fill="#f5f3ff" stroke="#ddd6fe"/>
+    <text x="24" y="36" class="label">Skill request</text>
+    <text x="24" y="62" class="body">Workflow, trigger phrase,</text>
+    <text x="24" y="80" class="body">and guardrails.</text>
+  </g>
+  <g transform="translate(598,164)">
+    <rect width="240" height="94" rx="12" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <text x="24" y="36" class="label">Docs issue</text>
+    <text x="24" y="62" class="body">Page, confusion, and</text>
+    <text x="24" y="80" class="body">suggested wording.</text>
+  </g>
+  <g transform="translate(868,164)">
+    <rect width="274" height="94" rx="12" fill="#fff7ed" stroke="#fed7aa"/>
+    <text x="24" y="36" class="label">Pull request</text>
+    <text x="24" y="62" class="body">Scope, safety checklist,</text>
+    <text x="24" y="80" class="body">and validation.</text>
+  </g>
+
+  <text x="58" y="294" class="body">The forms steer contributors away from private drafts, copyrighted corpora, generated caches, and secrets.</text>
+</svg>

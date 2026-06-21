@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 330" role="img" aria-label="Security policy - private report to fix">
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#dc2626"/>
+      <stop offset="0.5" stop-color="#d97706"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .title { font-size: 40px; font-weight: 800; fill: #111827; }
+      .tag { font-size: 18px; font-weight: 500; fill: #475569; }
+      .node { font-size: 16px; font-weight: 800; fill: #111827; }
+      .body { font-size: 13px; font-weight: 500; fill: #64748b; }
+      .badge { font-size: 13px; font-weight: 800; fill: #7f1d1d; }
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="328" rx="18" fill="url(#card)" stroke="#e2e8f0" stroke-width="1.5"/>
+  <rect x="28" y="0" width="1144" height="5" rx="2.5" fill="url(#bar)"/>
+
+  <text x="58" y="78" class="title">Security Policy</text>
+  <text x="58" y="112" class="tag">Protect drafts, credentials, unpublished research, and release workflows.</text>
+
+  <g transform="translate(58,162)">
+    <rect width="220" height="92" rx="12" fill="#fef2f2" stroke="#fecaca"/>
+    <text x="24" y="36" class="node">Report privately</text>
+    <text x="24" y="62" class="body">Do not open public issues</text>
+    <text x="24" y="80" class="body">for vulnerabilities.</text>
+  </g>
+  <path d="M304 208 h72 m-10 -7 l10 7 l-10 7" stroke="#cbd5e1" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(400,162)">
+    <rect width="220" height="92" rx="12" fill="#fffbeb" stroke="#fde68a"/>
+    <text x="24" y="36" class="node">Triage impact</text>
+    <text x="24" y="62" class="body">Identify affected skills,</text>
+    <text x="24" y="80" class="body">scripts, or workflows.</text>
+  </g>
+  <path d="M646 208 h72 m-10 -7 l10 7 l-10 7" stroke="#cbd5e1" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(742,162)">
+    <rect width="220" height="92" rx="12" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <text x="24" y="36" class="node">Patch safely</text>
+    <text x="24" y="62" class="body">Fix without exposing secrets</text>
+    <text x="24" y="80" class="body">or private data.</text>
+  </g>
+  <path d="M988 208 h48 m-10 -7 l10 7 l-10 7" stroke="#cbd5e1" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(1058,162)">
+    <rect width="84" height="92" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text x="42" y="38" text-anchor="middle" class="badge">Fix</text>
+    <text x="42" y="62" text-anchor="middle" class="body">then</text>
+    <text x="42" y="80" text-anchor="middle" class="body">disclose</text>
+  </g>
+
+  <text x="58" y="294" class="body">In scope: local file exposure, credentials, unexpected code execution, workflow leaks, and unsafe handling of private research data.</text>
+</svg>

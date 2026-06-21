@@ -6,6 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
+        ## Documentation improvement
+
         Use this for public documentation problems. Do not paste private paper
         drafts, reviews, or copyrighted paper text.
   - type: input
@@ -26,3 +28,13 @@ body:
     attributes:
       label: Suggested change
       description: Include replacement wording if you have it.
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Who would this help?
+      options:
+        - New users installing the package
+        - Researchers using a skill
+        - Contributors
+        - Maintainers
+        - Other

@@ -6,8 +6,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting a problem. Please do not include private drafts,
-        reviews, credentials, unpublished data, or copyrighted paper content.
+        ## Public-safe bug report
+
+        Thanks for reporting a problem. Please keep the repro minimal and do
+        not include private drafts, reviews, credentials, unpublished data, or
+        copyrighted paper content.
   - type: dropdown
     id: area
     attributes:
@@ -51,6 +54,13 @@ body:
       label: Relevant output
       description: Paste logs or command output after removing sensitive data.
       render: text
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Public-safety check
+      options:
+        - label: I removed private drafts, credentials, unpublished research material, and copyrighted paper content.
+          required: true
   - type: textarea
     id: environment
     attributes:
