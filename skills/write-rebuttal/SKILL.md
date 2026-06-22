@@ -1,6 +1,6 @@
 ---
 name: write-rebuttal
-description: Drafts peer-review rebuttals and author responses in the three real venue formats - (a) strict one-page LaTeX rebuttal PDFs (CVPR-style), (b) OpenReview threaded per-review replies under 10,000-character budgets (NeurIPS/ICML/ICLR), and (c) revise-and-resubmit packages with a change-log response document (CHI, SIGMOD/ICDE revision rounds, journals). Anchors every response to paper sections, tables, figures, and line numbers; enforces character/page budgets and point-by-point coverage with bundled checker scripts; ships a one-page rebuttal LaTeX template. Use when the user says "write my rebuttal", "respond to reviewers", "author response", "reviews came back", "reviewer 2 says", "revise and resubmit", "response letter", "rebuttal deadline", or needs to fit a response into an OpenReview character limit or a one-page PDF.
+description: Drafts peer-review rebuttals and author responses in the three real venue formats - (a) strict one-page LaTeX rebuttal PDFs (CVPR-style), (b) OpenReview threaded per-review replies under 10,000-character budgets (NeurIPS/ICML/ICLR), and (c) revise-and-resubmit packages with a change-log response document (CHI, SIGMOD/ICDE revision rounds, journals). Anchors every response to paper sections, tables, figures, and line numbers; enforces character/page budgets and point-by-point coverage with bundled checker scripts; ships a one-page rebuttal LaTeX template. Use when the user says "write my rebuttal", "respond to reviewers", "author response", "reviews came back", "reviewer 2 says", "revise and resubmit", "response letter", "rebuttal deadline", or needs to fit a response into an OpenReview character limit or a one-page PDF. Drafts files on disk only; never posts, uploads, or submits.
 ---
 
 # Write Rebuttal
@@ -122,6 +122,43 @@ Write the artifacts next to the user's paper, named per format:
 verification record (live facts checked, checker results, remaining
 UNVERIFIED items, the rebuttal deadline with timezone). The user reviews,
 edits, and posts/uploads everything themselves.
+
+## Worked mini-example
+
+The matrix → anchored response → checker loop, end to end. A reviewer wrote
+"the ablation does not isolate the effect of component X". One row in
+`points.md`:
+
+```markdown
+| ID | Reviewer quote (abridged) | Type | Severity | Effort | Strategy |
+|---|---|---|---|---|---|
+| R2.1 | "ablation does not isolate X" | missing-experiment | high | none | rows 3 vs 5 of Table 4 isolate X; reorder so the pair is adjacent |
+```
+
+The drafted response (OpenReview format here — one `## ` box, leads with the
+answer, anchored, no padding):
+
+```markdown
+## Response to Reviewer 7Pqd (R2)
+
+**[R2.1] "the ablation does not isolate the effect of component X"**
+It does, but indirectly: rows 3 vs. 5 of Table 4 (Sec. 6.2, L412) differ
+only in X. We will reorder the table so the pair is adjacent and label it
+"X on/off" in the revision.
+```
+
+Verify before handing it over:
+
+```
+python3 skills/write-rebuttal/scripts/check_coverage.py points.md responses.md --strict
+python3 skills/write-rebuttal/scripts/check_budget.py text responses.md --sections --venue venues/conferences/<id>.yml
+```
+
+Coverage passes because `R2.1` appears in a response and that section carries
+anchors (`Table 4`, `Sec. 6.2`, `L412`); budget passes if the box is under
+the venue's per-response limit. The same row drafts into `\rpoint{R2.1}{...}`
+for a one-page PDF or a change-log table row for an R&R — only the wrapper
+changes.
 
 ## Output
 

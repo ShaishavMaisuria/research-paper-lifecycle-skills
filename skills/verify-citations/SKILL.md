@@ -74,6 +74,9 @@ and clean".
      the `CANONICAL_INSTANCE` wrong-artifact check (on by default).
    - `--no-soft-fail` — abort (exit 1) the instant any index is unreachable,
      instead of degrading to PARTIAL-PASS.
+   - `--self-test` — run the bundled offline unit tests for the deterministic
+     `ENTRY_TYPE_MISMATCH` check (no network, no `.bib` needed); exits 0 if they
+     pass. Use this to confirm the script is intact after editing it.
 
    Exit codes: `0` clean, `2` problems found, `1` operational failure (bad
    file, no network, missing CONTACT_EMAIL — fix the cause, do not skip the
@@ -94,6 +97,7 @@ and clean".
    | DUPLICATE_KEY / DUPLICATE_DOI / DUPLICATE_TITLE | ERROR | Same paper or key twice |
    | MALFORMED_DOI / MALFORMED_ARXIV_ID | ERROR | Identifier cannot be valid |
    | POSSIBLE_ID_TYPO / MISSING_DOI / VENUE_MISMATCH / AUTHOR_LIST_DIFFERS / TITLE_PARTIAL_MATCH / NOT_IN_INDEXES / EXPRESSION_OF_CONCERN | WARN | Real paper, imperfect entry — fix or justify |
+   | ENTRY_TYPE_MISMATCH | WARN | BibTeX type contradicts the resolved record (e.g. a journal article or monograph typed `@inproceedings`, a `booktitle` naming a journal/publisher, or `@inproceedings` carrying `journal=`) — set the type from the canonical `type` field |
    | CANONICAL_INSTANCE | WARN | Resolves, but a *different artifact* of the same work is what the field cites — pick the canonical instance |
    | LOW_RELEVANCE | WARN | Resolves, but scored low topical fit to the paper — confirm it is load-bearing, never auto-remove |
    | UNVERIFIABLE_TYPE / RESOLVED_VIA_SEARCH / HAS_CORRECTION / RELEVANCE_OK / CHECK_SKIPPED | INFO | Context for manual judgment |
@@ -130,21 +134,28 @@ and clean".
    was unreachable, that is not done — re-run the skipped checks once
    connectivity returns before declaring the gate clean.
 
-6. **Report.** Summarize: N verified, list of fixes applied (old → new), list
-   of user decisions taken, any flags the user accepted as-is, and any
-   wrong-artifact / low-relevance items raised for the user's judgment. State
-   the script's overall verdict explicitly — **PASS**, **PARTIAL-PASS** (and
-   which checks did not run), or **FAIL**. If this run gates another skill's
-   output, report the verdict verbatim; never upgrade a PARTIAL-PASS to
-   "passed", and never promise acceptance or a clean review.
+6. **Report.** The script prints a canonical `VERDICT-LINE:` (verdict + raw
+   counts — N verified, errors, warnings, K skipped — plus the WARN breakdown
+   by flag) and writes the same string to the JSON as `verdict_line`. **Copy
+   that line verbatim into your summary and into any README or status line you
+   write** — do not recompose it from memory and do not round it off. Around
+   it, add: the list of fixes applied (old → new), user decisions taken, flags
+   the user accepted as-is, and any wrong-artifact / low-relevance items raised
+   for the user's judgment. If this run gates another skill's output, pass the
+   same `verdict_line` through unchanged; never upgrade a PARTIAL-PASS to
+   "passed", never collapse "PARTIAL-PASS, 11 WARN, 1 skipped" into "verified,
+   0 errors", and never promise acceptance or a clean review.
 
 ## Output
 
-- The script's per-entry report on stdout and, with `--json`, a
-  machine-readable report (statuses, flags, resolved DOIs/URLs) the calling
+- The script's per-entry report on stdout, ending with a canonical
+  `VERDICT-LINE:` you reproduce verbatim, and — with `--json` — a
+  machine-readable report (per-entry statuses and flags, resolved DOIs/URLs,
+  the same `verdict_line`, and a `summary.warnings_by_flag` count) the calling
   skill can act on.
 - A corrected `.bib` (edits applied from canonical records, with the user's
-  approval) and a short human summary of what changed and what remains open.
+  approval) and a short human summary whose first line is the verbatim
+  `VERDICT-LINE`, followed by what changed and what remains open.
 
 ## Hard rules
 
@@ -165,6 +176,16 @@ and clean".
   unreachable, report PARTIAL-PASS, list the skipped checks, and re-run them
   before treating the bibliography as verified. Never let "could not check"
   read as "clean".
+- **The human summary must echo the machine verdict verbatim — never
+  paraphrase it cleaner.** Any prose summary, README, or status line you write
+  must carry the script's exact verdict (PASS / PARTIAL-PASS / FAIL) plus the
+  raw counts: N verified, M warnings (by flag), K skipped checks. Do not
+  collapse "PARTIAL-PASS, 11 WARN, 1 skipped check" into "verified, 0 errors";
+  a clean-looking summary that diverges from the report it summarizes is itself
+  a failure. An entry is only "verified" once an actual index round-trip
+  confirmed it this session and reconciled its type/venue/DOI to the canonical
+  (not reprint) record — never mark verified from a stale or skipped check, and
+  never leave a "not yet trustworthy" banner on a file you call verified.
 - A RETRACTED result must be surfaced to the user verbatim, with the
   retraction-notice DOI. Citing retracted work knowingly is sometimes
   legitimate (e.g., studying retractions) — that is the user's call, and the
@@ -194,8 +215,7 @@ and clean".
 ## Memory
 
 This skill uses the shared `.paper-memory/` convention in the user's paper
-directory (full spec:
-[`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+directory, following [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md).
 
 - **At start:** read `.paper-memory/lessons.md` to skip re-flagging entries the
   user already resolved this cycle, and lead with any `recurring` citation

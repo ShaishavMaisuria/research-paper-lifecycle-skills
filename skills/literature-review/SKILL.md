@@ -69,6 +69,15 @@ contract.
    foundational-lineage), and run the co-citation sanity check before
    screening. Full protocol in
    [references/methodology.md](references/methodology.md#snowballing).
+5. **Treat a degraded search as not-yet-done, not done.** `find-papers`'
+   `resolve_papers.py` stamps each fan-out COMPLETE or PARTIAL and flags any
+   result confirmed by only a single index. If a theme's search comes back
+   PARTIAL (a provider was rate-limited), or its core papers are single-index
+   only, the citation-graph stage silently fell back — recall for that theme
+   rests on luck. Re-issue the rate-limited leg after a cool-down (add
+   `S2_API_KEY`) or substitute a provider before declaring the theme covered;
+   record in `corpus.json` which papers were recoverable only via a fallback
+   path so the gap is auditable.
 
 ### Phase 3 — Screen
 
@@ -112,11 +121,30 @@ contract.
    emits the `.bib` with the corpus's exact keys. Never hand-edit a key in the
    `.bib`; change it in the corpus (`corpus.py add --update`) and regenerate,
    so the corpus, the `.bib`, and the review's `[@key]`s never diverge.
-2. Run the `verify-citations` skill on `references.bib`. Fix or drop anything
-   unresolvable; flag retractions to the user.
-3. Only after a key passes: `corpus.py set KEY --verified yes`.
-   Never set `--verified yes` without that check — this is the
-   anti-fabrication gate.
+2. Run the `verify-citations` skill on `references.bib`, **always with
+   `--json`** so there is a machine artifact to reconcile against:
+   `check_bibtex.py <ws>/references.bib --json <ws>/citecheck.json`. Fix or
+   drop anything unresolvable; flag retractions to the user.
+3. Set verified flags **from that artifact, not by hand**:
+   `python3 scripts/corpus.py --corpus <ws>/corpus.json verify-audit
+   --report <ws>/citecheck.json`. The audit marks `verified:yes` *only* for
+   keys the report confirmed (status VERIFIED), clears any flag the report did
+   not confirm, records `verified_via` provenance + the date, and echoes the
+   report's verdict line verbatim. It **exits nonzero on a PARTIAL-PASS or
+   FAIL** — so an incomplete run cannot read as clean.
+   - If you set a flag manually instead, `corpus.py set KEY --verified yes`
+     now **requires `--source <provider>`** (the index whose canonical record
+     confirmed the entry) and records it; a bare `--verified yes` is rejected.
+   - "Verified" means an authoritative index actually returned the canonical
+     record for this entry *this session* — not merely that some API echoed an
+     id once, and never with `fetched:false`. A key marked `verified:yes` with
+     no provenance is a broken gate; `corpus.py stats` now WARNs when it sees
+     one.
+   - Mirror the verify-citations verdict line **verbatim** in the review's
+     prose and any summary/README: the exact verdict (PASS / PARTIAL-PASS /
+     FAIL) plus raw counts (N verified, M warnings by flag, K skipped checks).
+     Never upgrade a PARTIAL-PASS to "verified", and never collapse
+     "PARTIAL-PASS, 11 WARN, 1 skipped" into "verified, 0 errors".
 
 ### Phase 7 — Draft
 

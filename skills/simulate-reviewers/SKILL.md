@@ -1,6 +1,6 @@
 ---
 name: simulate-reviewers
-description: Venue-calibrated pre-submission peer-review simulation. Use when a researcher says "simulate reviewers", "mock review", "review my paper like a NeurIPS reviewer", "what would Reviewer 2 say", "red-team my paper", "find weaknesses before I submit", "peer review my paper", "strengths and weaknesses / pros and cons of my paper", "what to focus on", or wants a rubric score / borderline-reject risk estimate for a conference or journal (NeurIPS, ICML, ICLR, CVPR, KDD, SIGMOD, SIGSPATIAL, CHI, ICDE, VLDB, LNCS, TKDE, TODS...). Builds a reviewer panel calibrated to the venue family and track (harsh NeurIPS main-track skeptics vs lenient demo-track judges), scores novelty/soundness/reproducibility/clarity on the venue's review-form scale, hunts weaknesses grounded in quoted paper text, aggregates scores into a decision-risk band with borderline-reject flags, and outputs a prioritized fix list. Advisory simulation only — never predicts real outcomes, never fabricates citations, never submits anything.
+description: Venue-calibrated peer-review simulation. Use when a researcher says "simulate reviewers", "mock review", "review my paper like a NeurIPS reviewer", "what would Reviewer 2 say", "red-team my paper", "find weaknesses before I submit", "peer review my paper", "strengths and weaknesses / pros and cons of my paper", "what to focus on", or wants a rubric score / borderline-reject risk estimate for a conference or journal (NeurIPS, ICML, ICLR, CVPR, KDD, SIGMOD, CHI, VLDB, LNCS, TKDE, TODS...). Builds a reviewer panel calibrated to the venue family and track (harsh NeurIPS main-track skeptics vs lenient demo-track judges), scores novelty/soundness/reproducibility/clarity on the venue's scale, hunts weaknesses grounded in quoted paper text, aggregates scores into a decision-risk band with borderline-reject flags, and outputs a prioritized fix list. Advisory only; improves the paper, never predicts the outcome, re-verifies facts against the live CFP, fabricates no citations or reviewers, and submits nothing.
 ---
 
 # Simulate Reviewers
@@ -50,7 +50,11 @@ authors what to fix while there is still time.
    profile's `cfp_url` (and reviewer-guidelines page if linked) and confirm:
    review scale and form, blind level, rebuttal format, track expectations.
    If anything differs, update the profile YAML, note the discrepancy in the
-   report, and prefer the live facts.
+   report, and prefer the live facts. Label every venue fact you state with a
+   confidence tag and a clickable source:
+   `verified-live` / `corroborated` / `inferred-from-family` /
+   `needs-verification`. A scale number quoted to the user with no source is a
+   bug, not a convenience.
 
 3. **Read the whole paper and build a claim inventory.** List every claim of
    novelty ("first", "state-of-the-art", "outperforms"), every empirical
@@ -117,13 +121,53 @@ authors what to fix while there is still time.
 
 ## Output
 
-A simulated review packet, presented in chat (and written to a file only if
-the user asks): N independent reviews in the venue's form format — each with a
-**Strengths** section and a **Weaknesses** section (pros and cons) — the
-meta-review, the score table + `aggregate_scores.py` decision-risk readout,
-and the prioritized fix list. The meta-review names the paper's biggest
-strength to preserve as well as its biggest risk to fix. Every output carries the disclaimer: this is a
-simulation to improve the paper, **not** a prediction of the real outcome.
+A simulated review packet, presented in chat (written to a file only if the
+user asks):
+
+- **N independent reviews** in the venue's form format, each opening with a
+  **Strengths** section, then **Weaknesses**, then questions and subscores.
+- **The meta-review**, naming the biggest strength to preserve and the biggest
+  shared risk to fix, and stating whether a champion exists.
+- **The score table** plus the `aggregate_scores.py` decision-risk readout.
+- **The prioritized fix list**, every item tagged `fix-now` /
+  `rebuttal-defensible` / `structural`.
+
+Every output carries the disclaimer: this is a simulation to improve the
+paper, **not** a prediction of the real outcome.
+
+## Worked mini-example
+
+A 9-page submission to NeurIPS main track. After `python3
+scripts/review_form.py venues/conferences/neurips-2026.yml --track Main` and a
+live-CFP check (scale and rebuttal format confirmed, tagged `verified-live`),
+the four personas are written independently. Convergence emerges: **R2** (the
+empirical skeptic) and **R4** (the adjacent-field expert) both, without seeing
+each other, land on the same gap.
+
+> **R2, Weaknesses.** "Table 2 reports a single run (§5.1). With ±std over 5
+> seeds, does the +1.3% gap over the baseline survive? No tuning-budget parity
+> is stated for the baseline." — soundness 2, confidence 5.
+
+> **R4, Weaknesses.** "The §1 claim 'first to combine X with Y' needs the
+> 2023 work on X-under-Y. If that line exists, the novelty claim narrows to an
+> engineering delta." (Conditional — routed to `find-papers`; no fake citation
+> stated.) — novelty 2, confidence 4.
+
+Filling and aggregating `scores.json` (R1 5/4, R2 4/5, R3 6/2, R4 5/4) yields:
+
+```
+conf-weighted mean: 4.8   delta vs threshold: -0.133 (normalized)
+DECISION RISK:      BORDERLINE-REJECT
+drag dimensions:    soundness 2.5, reproducibility 2.75
+flags:              strong detractor present (R2) — objection must be rebuttal-proof
+```
+
+The fix list leads with the convergent finding: **`fix-now`** — add 5-seed
+±std and tuning-budget parity to Table 2 (cheapest path off the soundness
+floor); **`fix-now`** — verify the X-under-Y prior work and soften the "first"
+claim accordingly. The meta-review notes the only above-threshold score came
+from the low-confidence skimmer (no real champion), so at borderline this
+resolves downward unless the soundness objection is closed before submission.
 
 ## Adapt to your discipline
 
@@ -150,7 +194,7 @@ action-editor + 2 reviewers and accept/minor/major/reject.
 ## Memory
 
 This skill uses the shared `.paper-memory/` convention in the user's paper
-directory (full spec: [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+directory, following [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md).
 
 - **At start:** read `.paper-memory/profile.yml` (vertical, risk appetite,
   venue tier) to calibrate the panel and how hard the personas press novelty

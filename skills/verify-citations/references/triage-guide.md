@@ -18,6 +18,7 @@ citation key, show the user a before/after diff. Re-check fixed entries with
    - [DUPLICATE_KEY / DUPLICATE_DOI / DUPLICATE_TITLE](#duplicates)
    - [MALFORMED_DOI / MALFORMED_ARXIV_ID](#malformed-identifiers)
 2. [WARN flags](#warn-flags)
+   - [ENTRY_TYPE_MISMATCH](#entry_type_mismatch)
    - [CANONICAL_INSTANCE](#canonical_instance)
 3. [INFO flags](#info-flags)
 4. [The PARTIAL-PASS verdict](#the-partial-pass-verdict)
@@ -126,8 +127,49 @@ publisher renamed the record "RETRACTED ARTICLE: ...". Required handling:
 | MISSING_FIELDS | Required fields for the entry type absent | Fill from canonical record; venues' bib styles error or render badly without them |
 | IMPLAUSIBLE_YEAR | Not a 4-digit year in 1900..next year | Fix the typo |
 | EXPRESSION_OF_CONCERN | Publisher signaled doubts | See [RETRACTED](#retracted), point 4 |
+| ENTRY_TYPE_MISMATCH | BibTeX type contradicts the resolved record (journal article or monograph typed `@inproceedings`, a `booktitle` naming a journal/publisher, or `@inproceedings` carrying `journal=`) | See [ENTRY_TYPE_MISMATCH](#entry_type_mismatch) — set the type from the canonical record's `type` |
 | CANONICAL_INSTANCE | Title resolves, but a different artifact is what the field cites | See [CANONICAL_INSTANCE](#canonical_instance) — pick the instance your readers cite |
 | LOW_RELEVANCE | Resolves, but low topical fit to the paper | See [references/relevance-gate.md](relevance-gate.md) — confirm load-bearing, never auto-remove |
+
+### ENTRY_TYPE_MISMATCH
+
+The title matched (recall is fine), but the BibTeX **entry type** contradicts
+what the resolved record actually is. The recurring failure this catches: a
+journal article or a monograph typed `@inproceedings` (often with
+`booktitle = {Springer}`, `booktitle = {MIT Press}`, or a journal name as the
+booktitle), or a conference paper carrying a `journal=` field. Such an entry
+resolves and its title checks out, yet it renders wrong and would fail a strict
+verification pass — the metadata was never reconciled to the canonical record.
+
+How the script decides (generic — keyed on the resolved record, never on a named
+venue or paper):
+
+1. It maps the resolved record's Crossref `type` (e.g. `journal-article`,
+   `monograph`, `proceedings-article`) to the BibTeX type(s) that record should
+   carry. When Crossref has no `type`, it falls back to a coarse venue class
+   (journal / conference / book / standard-report / preprint).
+2. It flags the declared type when it is not among the expected set.
+3. Independently, it lints container fields: an `@inproceedings`/`@incollection`
+   whose `booktitle` names a journal ("Transactions", "Letters", "…Analysis"),
+   or a bare publisher ("Springer", "MIT Press"), or that carries a `journal=`
+   field at all.
+
+This is **WARN-only and advisory** — the script never rewrites the type. Loose
+catch-all types (`@misc`, `@online`, `@software`, `@unpublished`,
+`@techreport`) are skipped, so a deliberately-loose entry is never flagged, and
+a correct `@article`/`@inproceedings` produces no flag.
+
+Triage:
+1. Fetch the canonical BibTeX (see "Fetching canonical BibTeX" in
+   [verification-sources.md](verification-sources.md)) — the DBLP `.bib`
+   endpoint or doi.org content negotiation emits the correct `@type` and the
+   right container field (`journal=`/`booktitle=`/`publisher=`).
+2. Replace the entry body, keep the original citation key, show the diff. Use
+   the **original** DOI, not a reprint/anthology DOI, when both exist.
+3. Re-check with `--key {key}` and confirm the flag clears.
+
+Never set the type by guessing — pull it from the record, the same rule as every
+other fix in this gate.
 
 ### CANONICAL_INSTANCE
 

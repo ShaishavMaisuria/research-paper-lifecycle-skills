@@ -187,6 +187,16 @@ Details, rate limits, and the fallback matrix: [references/api-notes.md](referen
    surface the siblings and let the user choose deliberately. Never silently
    collapse the cluster to one.
 
+   When sibling records share a stable id but differ in surface title, the
+   resolver emits `title_variants` (all distinct titles seen for that one
+   work). **Match and dedupe on the stable id first, titles second** — an
+   alternate title for the same DOI/eprint is an alias, not a different paper,
+   and must never be scored as a miss. Once you pick the instance, **overwrite
+   the entry's title field with the canonical string the API returned for that
+   exact id**, not a recalled or hand-typed title, and keep the variants in a
+   note so the chosen form is auditable. This is what stops a bib and a corpus
+   from drifting to two different titles for the same work.
+
 6. **Hand off.**
    - Full text needed → `fetch-paper` skill (Unpaywall/arXiv/ACM-OA, fetch
      on demand, processed transiently).
@@ -202,6 +212,20 @@ commands used (so the search is reproducible). Use `--json` when piping into
 files the user asked for. Report total counts vs. shown counts honestly;
 when a provider failed (e.g. S2 429s exhausted), say so rather than filling
 gaps from memory.
+
+**Tag each result by evidence tier and keep titles canonical.** A result that
+came only from a citation-graph edge or a single keyword hit is a *candidate*,
+not a confirmed citation of any specific paper: label it (graph / keyword /
+seed-degree) so a downstream consumer can threshold on confidence rather than
+treat every entry as equally certain. When the target is a *known subset* of a
+paper's bibliography, report recall against that subset separately from a
+precision band against the expected full count — never present over-fetched
+neighbors at the same confidence as confirmed hits. For every retained entry,
+take the **title verbatim from the canonical record for its resolved id**
+(don't hand-type or recall it), normalize to the publisher/DOI-canonical
+capitalization, and wrap proper nouns/acronyms in braces in any BibTeX so the
+as-published form survives — this is what prevents a title from fuzzy-matching
+yet failing a strict string lookup.
 
 **Always surface the coverage verdict.** When you fan out with
 `resolve_papers.py`, repeat its COMPLETE/PARTIAL banner and the per-provider
@@ -236,6 +260,21 @@ that happened to answer.
   `unresolved-keep` rather than dropping it on a single-index miss, and mark
   the run PARTIAL. A missing DOI is never grounds to discard a paper that has
   an arXiv / DBLP / anthology id. Never report a PARTIAL run as exhaustive.
+- **A PARTIAL run is a retriable gate, not a finish line.** The scripts already
+  retry 429/5xx with exponential backoff before giving up; if a run still comes
+  back PARTIAL (a provider exhausted its retries), do NOT accept it as done
+  because the surviving indexes "happened to cover" the targets — recall then
+  rests on luck. Re-issue the failed leg after a cool-down (and with
+  `S2_API_KEY` for Semantic Scholar), or substitute an equivalent provider,
+  before declaring the pass complete. When a target was recoverable *only*
+  through a fallback path, surface that title explicitly in provenance so the
+  gap is auditable rather than silently absorbed.
+- **Gate completion per required cluster, not just per run.** For any cluster
+  the scope marks central (a direct-competitor or headline-contribution
+  cluster), require that ≥2 independent indexes actually answered for *that*
+  cluster's queries before treating it as covered; a central cluster confirmed
+  by a single surviving provider is degraded, not complete, even if the overall
+  run banner is COMPLETE.
 - For a *named* paper, existence is not enough: an older edition or a
   same-author near-duplicate title can pass a bare match yet be the wrong
   citation. Run candidates through `resolve_canonical.py`, prefer the latest

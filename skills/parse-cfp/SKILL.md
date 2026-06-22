@@ -1,6 +1,6 @@
 ---
 name: parse-cfp
-description: Parses a conference Call for Papers (CFP) URL into a machine-checkable requirements card - deadlines with timezone (AoE vs local), per-track page limits including/excluding references, single/double/triple-blind level, exact LaTeX template invocation, LLM/AI-use policy, rebuttal format, and submission system (OpenReview, CMT, EasyChair, HotCRP, PCS) - emitted as a year-versioned venue-profile YAML conforming to venues/schema.yml. Use when the user shares a CFP or author-instructions URL, asks what a venue's submission requirements, deadlines, page limits, or anonymity rules are, or wants a venue profile under venues/conferences/ created or refreshed for a new cycle.
+description: Parses a conference Call for Papers (CFP) URL into a machine-checkable requirements card - deadlines with timezone (AoE vs local), per-track page limits including/excluding references, single/double/triple-blind level, exact LaTeX template invocation, LLM/AI-use policy, rebuttal format, and submission system (OpenReview, CMT, EasyChair, HotCRP, PCS) - emitted as a year-versioned venue-profile YAML conforming to venues/schema.yml. Use when the user shares a CFP or author-instructions URL, asks what a venue's submission requirements, deadlines, page limits, or anonymity rules are, or wants a venue profile under venues/conferences/ created or refreshed for a new submission cycle.
 ---
 
 # Parse CFP
@@ -47,7 +47,8 @@ Downstream consumers: `preflight-check`, `tailor-to-venue`, `write-rebuttal`,
    follow-up pages you actually need — per-track submission pages, the
    deadlines page, the camera-ready/author-kit page — one invocation each,
    never a site crawl.
-   - Exit code 3 = the CFP is a PDF; read the saved file directly.
+   - Exit code 3 = non-HTML content (a PDF CFP, a JSON API response); the
+     body is saved under `.cache/` — read that file directly.
    - "very little text extracted" warning = JavaScript-rendered page; ask the
      user to paste the page text and mark the profile `needs-verification`.
      Never fill gaps from memory.
@@ -93,6 +94,43 @@ Downstream consumers: `preflight-check`, `tailor-to-venue`, `write-rebuttal`,
    Re-verify deadlines and page limits against the live CFP before submitting —
    CFPs change mid-cycle and a stale limit can cause a desk reject."*
 
+## Worked mini-example
+
+User pastes `https://sigspatial2026.sigspatial.org/research-submission.html`.
+After fetching, the Research-track section reads: *"papers are limited to 10
+pages (excluding references), with up to 2 additional pages after the references
+to be used for appendices"*, deadlines are stated as *"11:59 PM Pacific Time"*,
+and the submission link points at `easychair.org/conferences/?conf=acmsigspatial2026`.
+That extracts to:
+
+```yaml
+id: sigspatial-2026
+deadlines:
+  abstract: 2026-05-29
+  paper: 2026-06-05
+  timezone: PT          # CFP says "Pacific Time", NOT AoE — recorded verbatim
+tracks:
+  - name: Research
+    page_limit: 10
+    page_limit_excludes: [references, appendix]
+    notes: >
+      CFP verbatim: "papers are limited to 10 pages (excluding references),
+      with up to 2 additional pages after the references ... for appendices."
+review:
+  blind: single         # CFP lists author names — single, not double
+  submission_system: easychair
+verified:
+  date: 2026-06-21
+  source_urls:
+    - https://sigspatial2026.sigspatial.org/research-submission.html  # limits, deadlines, blind
+  confidence: verified-live
+```
+
+Two traps this example surfaces and the guide handles: the timezone is Pacific,
+not the AoE default, and the page limit excludes both references AND the
+appendix — encoded explicitly so `preflight-check` can enforce it. The page
+heading is confirmed to say 2026 before any of this is extracted.
+
 ## Output
 
 - `venues/conferences/<venue>-<year>.yml` — schema-conformant, year-versioned,
@@ -112,21 +150,14 @@ Downstream consumers: `preflight-check`, `tailor-to-venue`, `write-rebuttal`,
   `.cache/` and stays out of git — do not commit fetched CFP text to the repo.
 - Always include the re-verify-against-live-CFP notice in the final answer.
 
-## Source verification
+## Source verification (mandatory)
 
-This skill originates venue facts, so source verification is mandatory:
+This skill *originates* venue facts, so source verification is mandatory without exception:
 
-- Build the venue rules on demand for the venue and year the user chose. Never
-  rely on memory or a prior-year value without re-checking it.
-- Search for and open the live CFP or author-instructions page. Search results,
-  snippets, and deadline aggregators are leads only; confirm facts on an
-  official venue source before recording them.
-- Double-check desk-reject-class facts when possible: deadline, page limit and
-  exclusions, blind level, template, and submission system. If sources conflict,
-  surface the conflict instead of choosing silently.
-- Record a clickable source URL and date for every critical fact in the
-  profile's provenance. A fact without a source is emitted as unverified, never
-  asserted as final.
+- The venue is the **user's choice**; build its rules **on demand**, never from memory or a prior year.
+- **Search the web for the live CFP / author-instructions page and read the primary source** — never state a fact from a search snippet you didn't open, and never from a deadline aggregator without confirming on the official site.
+- **Double-check every desk-reject-class fact** (deadline, page limit + exclusions, blind level, template, submission system) against a second source; if sources disagree, surface the conflict — do not pick silently.
+- **Record a clickable reference link and the date for every fact** in the profile's `verified.source_urls`; set `confidence` to `verified-live`/`corroborated` only when sourced, else `needs-verification`. A fact with no link is emitted as unverified, never asserted.
 
 ## Bundled files
 

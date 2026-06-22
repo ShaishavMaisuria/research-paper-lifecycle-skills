@@ -23,6 +23,14 @@ the author resolves the instance *deliberately*:
   3. de-duplication by impact — within an ambiguous cluster, ranks by impact
      signal (citation count, then earliest year as a seminal-venue proxy) and
      marks one PREFERRED, the rest as siblings to weigh.
+  4. title-variant retention — when sibling records carry the SAME stable id
+     (DOI/arXiv/DBLP) but different surface titles, every distinct title is
+     emitted as `title_variants` on the cluster. Providers routinely return
+     different titles for one work (arXiv vs DBLP vs S2 vs published venue);
+     a string matcher then scores an alternate title as a MISS and the bib/
+     corpus can drift to two titles for one paper. Keying on the id and
+     surfacing the variants lets a consumer match on the id first and titles
+     second, and pin the form the citing community uses.
 
 It never decides for you: every ambiguous cluster prints a one-line
 `CHOOSE:` note so you pick. No venue, author, or paper is hardcoded — the
@@ -279,6 +287,41 @@ def brief(rec: dict) -> str:
     return f"{parts[0]} — {tail}" if tail else parts[0]
 
 
+def same_id(a: dict, b: dict) -> bool:
+    """True iff two records carry the SAME stable id (DOI / arXiv / DBLP)."""
+    ia, ib = id_of(a).strip().lower(), id_of(b).strip().lower()
+    return bool(ia) and ia == ib
+
+
+def title_variants_for(preferred: dict, members: list) -> list:
+    """Collect alternate surface titles for the SAME work as `preferred`.
+
+    The recurring failure: providers return different surface titles for one
+    paper (arXiv vs DBLP vs S2 vs the published venue), keyed by the same DOI/
+    eprint. A matcher that compares title STRINGS then scores an alternate
+    title as a miss, and the bib/corpus can drift to two titles for one work.
+    We key on the shared stable id and surface EVERY distinct title seen for
+    it, so dedupe/matching can use the id first and titles second, and the
+    author can pin the form the citing community uses.
+    """
+    seen, variants = set(), []
+    pt = (preferred.get("title") or "").strip()
+    for m in members:
+        rec = m["rec"] if isinstance(m, dict) and "rec" in m else m
+        t = (rec.get("title") or "").strip()
+        # An alternate title counts when it differs in string but is the same
+        # work — either by shared stable id, or (no id) by an identical stem.
+        if not t or t == pt:
+            continue
+        same_work = same_id(preferred, rec) or (
+            not id_of(preferred) and not id_of(rec)
+            and title_stem(pt) and title_stem(pt) == title_stem(t))
+        if same_work and t.lower() not in seen:
+            seen.add(t.lower())
+            variants.append(t)
+    return variants
+
+
 def report(clusters: list, anchor: str, as_json: bool):
     out_clusters = []
     flags = 0
@@ -288,6 +331,10 @@ def report(clusters: list, anchor: str, as_json: bool):
         ambiguous = len(recs) > 1
         ver = [version_marker(r.get("title", "")) for r in recs]
         any_version = any(ver)
+        # Alternate surface titles for the SAME work (shared id, or same stem
+        # when neither carries an id). Emitted so a downstream matcher keys on
+        # the id and accepts any of these titles instead of scoring a miss.
+        variants = title_variants_for(recs[0], ranked[1:]) if len(recs) > 1 else []
         note = None
         if ambiguous:
             flags += 1
@@ -302,6 +349,7 @@ def report(clusters: list, anchor: str, as_json: bool):
         out_clusters.append({
             "preferred": recs[0],
             "siblings": recs[1:],
+            "title_variants": variants,
             "ambiguous": ambiguous,
             "version_drift": any_version and ambiguous,
             "note": note,
@@ -330,6 +378,11 @@ def report(clusters: list, anchor: str, as_json: bool):
         print(f"  PREFERRED: {brief(c['preferred'])}")
         for s in c["siblings"]:
             print(f"  sibling:   {brief(s)}")
+        if c.get("title_variants"):
+            print("  alt-titles (same work, different surface string — match on "
+                  "the id, not the string; pin the form your community cites):")
+            for v in c["title_variants"]:
+                print(f"    - {v}")
         if c["note"]:
             print(f"  CHOOSE: {c['note']}")
         print()

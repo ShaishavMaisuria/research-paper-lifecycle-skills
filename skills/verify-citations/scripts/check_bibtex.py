@@ -30,9 +30,9 @@ Flags raised:
           DUPLICATE_KEY, DUPLICATE_DOI, DUPLICATE_TITLE, MALFORMED_DOI,
           MALFORMED_ARXIV_ID
   WARN  : TITLE_PARTIAL_MATCH, AUTHOR_LIST_DIFFERS, VENUE_MISMATCH,
-          MISSING_DOI, MISSING_FIELDS, EXPRESSION_OF_CONCERN,
-          NOT_IN_INDEXES, IMPLAUSIBLE_YEAR, POSSIBLE_ID_TYPO,
-          CANONICAL_INSTANCE, LOW_RELEVANCE
+          ENTRY_TYPE_MISMATCH, MISSING_DOI, MISSING_FIELDS,
+          EXPRESSION_OF_CONCERN, NOT_IN_INDEXES, IMPLAUSIBLE_YEAR,
+          POSSIBLE_ID_TYPO, CANONICAL_INSTANCE, LOW_RELEVANCE
   INFO  : UNVERIFIABLE_TYPE, HAS_CORRECTION, RESOLVED_VIA_SEARCH,
           RELEVANCE_OK, CHECK_SKIPPED
 
@@ -1030,6 +1030,107 @@ def compare_with_source(entry: dict, src: dict):
                           f".bib venue {bib_venue(fields)[:60]!r} vs "
                           f"{src['source']} {src.get('venue', '')[:60]!r} — "
                           "may be an alias; see references/triage-guide.md"))
+
+    # --- entry type (reconcile @inproceedings/@article/@book to the record) ---
+    flags.extend(entry_type_flags(entry, src))
+    return flags
+
+
+# Map a Crossref `type` (and a coarse venue class) to the BibTeX entry type(s)
+# that record SHOULD carry. Generic across fields — keyed on Crossref's own
+# controlled vocabulary, never on a named venue or paper.
+_CR_TYPE_TO_BIBTEX = {
+    "journal-article": {"article"},
+    "proceedings-article": {"inproceedings", "conference"},
+    "book": {"book"},
+    "monograph": {"book"},
+    "reference-book": {"book"},
+    "edited-book": {"book"},
+    "book-chapter": {"incollection", "inbook"},
+    "book-part": {"incollection", "inbook"},
+    "book-section": {"incollection", "inbook"},
+    "report": {"techreport"},
+    "report-component": {"techreport"},
+    "dissertation": {"phdthesis", "mastersthesis"},
+    "posted-content": {"article", "misc", "unpublished"},  # preprints
+}
+_VENUE_CLASS_TO_BIBTEX = {
+    "journal": {"article"},
+    "conference": {"inproceedings", "conference"},
+    "book": {"book", "incollection", "inbook"},
+    "standard/report": {"techreport", "misc"},
+    "preprint": {"article", "misc", "unpublished"},
+}
+# Words in a booktitle/journal field that betray the WRONG container kind:
+# a @inproceedings whose booktitle names a journal/publisher, etc.
+_JOURNAL_WORDS = re.compile(
+    r"\b(journal|transactions|trans\.|letters|proceedings of the .* society|"
+    r"review|quarterly|annals|acta)\b", re.I)
+_PUBLISHER_AS_BOOKTITLE = re.compile(
+    r"\b(press|springer|elsevier|wiley|mit press|o'reilly|morgan kaufmann|"
+    r"cambridge university press|oxford university press)\b", re.I)
+
+
+def entry_type_flags(entry: dict, src: dict):
+    """Flag a BibTeX entry type that contradicts the resolved record.
+
+    The recurring failure: a journal article or monograph typed @inproceedings
+    (often with booktitle='Springer' or a journal name), or a conference paper
+    typed @misc/@article. Titles match (recall fine) but the entry would render
+    wrong and fail a strict verification pass. We reconcile the declared type
+    against (1) the Crossref `type`, else (2) the coarse venue class, and also
+    lint container fields that name the wrong kind of venue. WARN-only and
+    advisory — the script never rewrites the type; it points at the canonical
+    record so the fix comes from there, not from a guess.
+    """
+    flags = []
+    declared = (entry.get("type") or "").lower()
+    fields = entry["fields"]
+    # Catch-all/loose types are deliberately permissive — @misc/@online/@software
+    # (WEB_TYPES) and @unpublished/@techreport/@booklet (SOFT_TYPES) can legitimately
+    # stand in for many record kinds, so flagging them as type-mismatched is a false
+    # positive. Skip both families.
+    if declared in SOFT_TYPES or declared in WEB_TYPES:
+        return flags
+
+    expected = None
+    basis = ""
+    cr_type = (src.get("type") or "").lower()
+    if cr_type in _CR_TYPE_TO_BIBTEX:
+        expected = _CR_TYPE_TO_BIBTEX[cr_type]
+        basis = f"{src['source']} type '{cr_type}'"
+    else:
+        vclass = _venue_class(src.get("venue", ""), src.get("ptypes"))
+        if vclass in _VENUE_CLASS_TO_BIBTEX:
+            expected = _VENUE_CLASS_TO_BIBTEX[vclass]
+            basis = f"venue class '{vclass}'"
+
+    if expected and declared and declared not in expected:
+        want = "/".join("@" + e for e in sorted(expected))
+        flags.append(("WARN", "ENTRY_TYPE_MISMATCH",
+                      f"@{declared} but {basis} indicates {want}; set the "
+                      "correct BibTeX type and pull author/journal/booktitle "
+                      "from the canonical record"))
+
+    # Container-field lint: @inproceedings/@incollection whose booktitle names
+    # a journal or a bare publisher is the classic 'metadata not validated'
+    # signal (e.g. booktitle='MIT Press', booktitle='Medical Image Analysis').
+    if declared in ("inproceedings", "conference"):
+        bt = fields.get("booktitle", "")
+        if bt and _JOURNAL_WORDS.search(bt):
+            flags.append(("WARN", "ENTRY_TYPE_MISMATCH",
+                          f"@{declared} with a journal-named booktitle "
+                          f"{bt[:50]!r}; a journal article should be @article "
+                          "with a journal= field"))
+        elif bt and _PUBLISHER_AS_BOOKTITLE.search(bt) and len(bt.split()) <= 3:
+            flags.append(("WARN", "ENTRY_TYPE_MISMATCH",
+                          f"@{declared} with a publisher as booktitle "
+                          f"{bt[:50]!r}; a book/monograph should be @book with "
+                          "publisher= and a real title"))
+        if fields.get("journal"):
+            flags.append(("WARN", "ENTRY_TYPE_MISMATCH",
+                          f"@{declared} carries a journal= field — wrong type "
+                          "for a journal article; use @article"))
     return flags
 
 
@@ -1401,6 +1502,75 @@ def entry_status(flags, online: bool, entry_type: str):
     return "VERIFIED*" if warns else "VERIFIED"
 
 
+def _run_self_test() -> bool:
+    """Offline unit tests for the deterministic ENTRY_TYPE_MISMATCH check.
+
+    No network: every case feeds entry_type_flags() a hand-built resolved
+    record, mirroring what the indexes return. Covers the recurring failure
+    (journal article / monograph typed @inproceedings, @inproceedings carrying
+    a journal= field) and guards against false positives on a correct @article,
+    a correct @inproceedings, and deliberately-loose @misc/@online types."""
+    def codes(entry, src):
+        return sorted(f[1] for f in entry_type_flags(entry, src))
+
+    cases = []  # (name, entry, src, expect_flag: bool)
+    # 1. journal article typed @inproceedings with a journal-named booktitle
+    cases.append(("journal-as-inproceedings",
+        {"type": "inproceedings",
+         "fields": {"booktitle": "Medical Image Analysis", "title": "A study"}},
+        {"source": "Crossref", "type": "journal-article",
+         "venue": "Medical Image Analysis"}, True))
+    # 2. monograph typed @inproceedings with a publisher as booktitle
+    cases.append(("monograph-as-inproceedings",
+        {"type": "inproceedings",
+         "fields": {"booktitle": "MIT Press", "title": "A long book title"}},
+        {"source": "Crossref", "type": "monograph", "venue": ""}, True))
+    # 3. clean correct @article — MUST NOT flag (no false positive)
+    cases.append(("clean-article",
+        {"type": "article",
+         "fields": {"journal": "Nature", "title": "A discovery"}},
+        {"source": "Crossref", "type": "journal-article",
+         "venue": "Nature"}, False))
+    # 4. @inproceedings carrying a journal= field
+    cases.append(("inproceedings-with-journal-field",
+        {"type": "inproceedings",
+         "fields": {"booktitle": "Proc. NeurIPS", "journal": "JMLR",
+                    "title": "A model"}},
+        {"source": "Crossref", "type": "proceedings-article",
+         "venue": "NeurIPS"}, True))
+    # 5. clean correct @inproceedings — MUST NOT flag
+    cases.append(("clean-inproceedings",
+        {"type": "inproceedings",
+         "fields": {"booktitle": "Proceedings of NeurIPS", "title": "A method"}},
+        {"source": "Crossref", "type": "proceedings-article",
+         "venue": "NeurIPS"}, False))
+    # 6. loose @misc resolving to a journal — MUST NOT flag (catch-all type)
+    cases.append(("loose-misc-no-false-positive",
+        {"type": "misc", "fields": {"title": "A note"}},
+        {"source": "Crossref", "type": "journal-article",
+         "venue": "Nature"}, False))
+    # 7. venue-class fallback when Crossref has no type: journal venue -> @article
+    cases.append(("venue-class-fallback-journal",
+        {"type": "inproceedings",
+         "fields": {"booktitle": "IEEE Transactions on Pattern Analysis",
+                    "title": "A result"}},
+        {"source": "Semantic Scholar", "type": "",
+         "venue": "IEEE Transactions on Pattern Analysis",
+         "ptypes": ["JournalArticle"]}, True))
+
+    ok = True
+    for name, entry, src, expect in cases:
+        got = codes(entry, src)
+        flagged = "ENTRY_TYPE_MISMATCH" in got
+        passed = flagged == expect
+        ok = ok and passed
+        print(f"  [{'PASS' if passed else 'FAIL'}] {name}: "
+              f"{'flagged' if flagged else 'clean'} "
+              f"(expected {'flagged' if expect else 'clean'})")
+    print("self-test:", "OK" if ok else "FAILED")
+    return ok
+
+
 def main():
     ap = argparse.ArgumentParser(
         prog="check_bibtex.py",
@@ -1411,7 +1581,11 @@ def main():
         epilog="Exit codes: 0 = clean, 2 = problems found, 1 = operational "
                "failure. Requires CONTACT_EMAIL (or interactive prompt) "
                "unless --offline.")
-    ap.add_argument("bibfile", help="path to the .bib file to verify")
+    ap.add_argument("bibfile", nargs="?",
+                    help="path to the .bib file to verify")
+    ap.add_argument("--self-test", action="store_true",
+                    help="run the bundled offline unit tests (no network) and "
+                    "exit 0 if they pass, 1 if any fails")
     ap.add_argument("--offline", action="store_true",
                     help="parse + static/duplicate checks only; no network")
     ap.add_argument("--key", action="append", default=[],
@@ -1442,6 +1616,11 @@ def main():
                     help="abort (exit 1) the moment any index is unreachable, "
                     "instead of degrading to a PARTIAL-PASS verdict")
     args = ap.parse_args()
+
+    if args.self_test:
+        sys.exit(0 if _run_self_test() else 1)
+    if not args.bibfile:
+        ap.error("the bibfile argument is required (or pass --self-test)")
 
     global SOFT_FAIL, CANONICAL_INSTANCE_ON
     SOFT_FAIL = not args.no_soft_fail
@@ -1564,9 +1743,29 @@ def main():
     n_skipped = sum(1 for r in results
                     if any(f["code"] == "CHECK_SKIPPED" for f in r["flags"]))
 
+    # Per-flag WARN breakdown. The human summary/README must echo the warning
+    # counts *by flag* (e.g. "11 WARN: 7 VENUE_MISMATCH, 3 MISSING_DOI, 1
+    # CANONICAL_INSTANCE"), never collapse them into "0 errors". Itemizing here
+    # removes the temptation to paraphrase the verdict cleaner than it was.
+    warn_by_flag = {}
+    for r in results:
+        if any(f["severity"] == "ERROR" for f in r["flags"]):
+            continue
+        seen = set()
+        for f in r["flags"]:
+            if f["severity"] == "WARN" and f["code"] not in seen:
+                warn_by_flag[f["code"]] = warn_by_flag.get(f["code"], 0) + 1
+                seen.add(f["code"])
+    warn_by_flag = dict(sorted(warn_by_flag.items(),
+                               key=lambda kv: (-kv[1], kv[0])))
+
     print(f"\nSummary: {total} entries — {n_verified} verified, "
           f"{n_err} with errors ({n_unresolved} unresolved, "
           f"{n_retracted} retracted), {n_warn} with warnings only.")
+    if warn_by_flag:
+        breakdown = ", ".join(f"{n} {code}" for code, n in warn_by_flag.items())
+        print(f"  WARN breakdown ({n_warn} entr"
+              f"{'y' if n_warn == 1 else 'ies'}): {breakdown}")
     if n_instance:
         print(f"  {n_instance} entr{'y' if n_instance == 1 else 'ies'} may cite "
               "a non-canonical artifact (CANONICAL_INSTANCE) — confirm you are "
@@ -1594,7 +1793,21 @@ def main():
     else:
         verdict = "PASS"
 
+    # Canonical one-line verdict string. Any human summary, README, or status
+    # line MUST reproduce this verbatim — it carries the verdict plus the raw
+    # counts so "PARTIAL-PASS, 11 WARN, 1 skipped" can never be laundered into
+    # "verified, 0 errors". Build it from the same numbers the JSON reports.
+    warn_str = (" — " + ", ".join(f"{n} {code}"
+                                  for code, n in warn_by_flag.items())
+                if warn_by_flag else "")
+    verdict_line = (f"{verdict}: {n_verified}/{total} verified, "
+                    f"{n_err} errors, {n_warn} warnings ({n_skipped} checks "
+                    f"skipped){warn_str}")
+
     print(f"\nVerdict: {verdict}")
+    print(f"VERDICT-LINE: {verdict_line}")
+    print("  ^ Copy the VERDICT-LINE verbatim into any summary or README. "
+          "Do not paraphrase it cleaner than it is.")
     if verdict == "PARTIAL-PASS":
         print("  Some authoritative indexes were unreachable, so these checks "
               "did NOT run this pass:")
@@ -1613,10 +1826,12 @@ def main():
                   "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                   "mode": "offline" if args.offline else "online",
                   "verdict": verdict,
+                  "verdict_line": verdict_line,
                   "skipped_checks": gaps,
                   "entries": results,
                   "summary": {"total": total, "verified": n_verified,
                               "errors": n_err, "warnings_only": n_warn,
+                              "warnings_by_flag": warn_by_flag,
                               "unresolved": n_unresolved,
                               "retracted": n_retracted,
                               "canonical_instance": n_instance,

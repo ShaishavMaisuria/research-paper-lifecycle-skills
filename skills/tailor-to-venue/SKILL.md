@@ -1,6 +1,6 @@
 ---
 name: tailor-to-venue
-description: Tailors a paper draft to a target venue and track by diffing it against a machine-readable venue profile. Produces a four-part tailoring plan - contribution reframing for the chosen track (research vs applications/industry vs demo vs short/vision), a page-budget cutting plan, a template/documentclass switch plan (acmart, IEEEtran, NeurIPS-style, llncs), and an anonymization sweep matched to the venue's blind level. Use when the user wants to adapt, retarget, resubmit, or port a paper to a different conference, journal, or track; fit a paper into a page limit ("cut to 10 pages"); switch LaTeX templates ("convert IEEEtran to acmart"); anonymize for double-blind review; or asks "make this fit SIGSPATIAL/NeurIPS/ICDE/KDD", "which track should this go to", or "retarget my rejected paper".
+description: Diffs a paper draft against a machine-readable venue profile and produces a four-part tailoring plan - contribution reframing for the chosen track (research vs applications/industry vs demo vs short/vision), a page-budget cutting plan, a template/documentclass switch plan (acmart, IEEEtran, NeurIPS-style, llncs), and an anonymization sweep matched to the venue's blind level. Use when the user wants to adapt, retarget, resubmit, or port a paper to a different conference, journal, or track; fit a paper into a page limit ("cut to 10 pages"); switch LaTeX templates ("convert IEEEtran to acmart"); anonymize for double-blind review; or asks "make this fit SIGSPATIAL/NeurIPS/ICDE/KDD", "which track should this go to", or "retarget my rejected paper".
 ---
 
 # Tailor to Venue
@@ -122,6 +122,43 @@ Write `tailoring-plan-<venue-id>-<track>.md` next to the draft with sections:
 
 Offer to execute the plan step by step; after edits, recommend
 `preflight-check` as the final gate.
+
+## Worked example
+
+A double-blind KDD draft was rejected; the user wants to retarget it to
+SIGSPATIAL's Research track. Both venues use `acmart` sigconf, so this case
+exercises three of the four plan parts (no template switch) and shows the
+de-anonymization direction.
+
+```
+python3 skills/tailor-to-venue/scripts/venue_diff.py paper/main.tex \
+    --venue venues/conferences/sigspatial-2026.yml --track Research
+```
+
+Reading the reports against the live SIGSPATIAL CFP, the plan comes out:
+
+- **Verification.** SIGSPATIAL Research is **single-blind, 10 pages excl.
+  references + appendix** (KDD was double-blind, 8 pages) — both confirmed on
+  the live CFP on the date of the diff.
+- **Track fit / reframing.** Same Research track, so light reframing: re-aim
+  vocabulary and baselines at the spatial-data community and add the
+  community-standard baseline KDD reviewers did not expect
+  (references/contribution-reframing.md, "Cross-venue repositioning").
+- **Page budget.** The limit *grew* 8→10 pages, so this is a de-compression,
+  not a cut: restore the ablation moved to the appendix for KDD and the
+  examples trimmed for space. `page_budget.py` confirms headroom.
+- **Template switch.** None — `venue_diff` reports the class matches.
+- **Anonymization (reverse sweep).** The hard part. The draft is anonymized;
+  SIGSPATIAL *requires* author names. Run
+  `anon_sweep.py paper/main.tex --venue venues/conferences/sigspatial-2026.yml`
+  — at single-blind it flags the leftover "Anonymous Author(s)" placeholder.
+  Restore the real `\author`/`\affiliation`/`\email` block, drop the
+  `anonymous`/`review` class options, re-link the real repository, and restore
+  first-person framing. Keep funding out until camera-ready unless the CFP
+  asks for it (references/anonymization-sweep.md, "De-anonymizing").
+
+The deliverable is `tailoring-plan-sigspatial-2026-Research.md`; no draft file
+is touched until the user asks to execute a step.
 
 ## Output
 

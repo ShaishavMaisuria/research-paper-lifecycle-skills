@@ -1,6 +1,6 @@
 ---
 name: orchestrate-paper
-description: Coordinate the full research paper lifecycle from idea to submission, planning staged specialist skills, checkpointing with the author, verifying live CFP facts, tracking paper-workspace state, and never submitting or fabricating results. Use for whole-pipeline, end-to-end, orchestration, or what-next requests.
+description: Goal-driven conductor for the whole idea-to-published-paper lifecycle. Takes a research idea plus experiments and a target ("submit to NeurIPS 2026", or "help me pick a venue") and runs a goal->plan->execute->verify->reflect loop. It plans the stages, invokes the right lifecycle skills in order (literature-review, write-abstract, preflight-check, simulate-reviewers, and the rest), checkpoints with the author before each stage, and re-verifies the live CFP via parse-cfp rather than trusting a cached profile. Use when a researcher says "take my idea to a submitted paper", "run the whole pipeline", "orchestrate the paper for venue X", "what's the plan from here", or "what's done and what's next". Copilot, not autonomous author. It stops to ask at every stage gate, never fabricates results or citations, and never submits. Trigger words - orchestrate, pipeline, end to end, whole paper, idea to submission.
 ---
 
 # Orchestrate Paper
@@ -19,10 +19,9 @@ It does not write the paper *for* the author and it never submits anything. It
 durable, reviewable record in `paper-workspace/` so the author can pause,
 inspect, reject, and resume at any point.
 
-This skill follows the package's working principles at every checkpoint: name
-assumptions, show competing readings, surface
-tradeoffs (including the cheaper path), stop when confused, verify live, and
-keep the author the author.
+This skill follows a few non-negotiable working principles at every checkpoint:
+name assumptions, show competing readings, surface tradeoffs, stop when
+confused, verify live, and keep the author the author.
 
 ## When to use
 
@@ -52,9 +51,9 @@ keep the author the author.
 3. **Whatever draft exists** — from a blank idea to a near-final `.tex`. The
    plan adapts to the current state (see the state script below).
 4. **`.paper-memory/`** — positioning (`profile.yml`), accumulated
-   `lessons.md`, and `decisions.md` (full spec:
-   [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
-   Read at start.
+   `lessons.md`, and `decisions.md` following the
+   [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)
+   pattern. Read at start.
 
 ## The loop
 
@@ -108,12 +107,55 @@ python3 scripts/pipeline_state.py status --workspace paper-workspace
 
 It reads `paper-workspace/INDEX.md` (and an optional `pipeline-state.json`) and
 prints **what's done / what's next / blocked-on** plus the current goal and the
-pending checkpoint. Other subcommands: `init`, `set-goal`, `advance`, `block`,
-`checkpoint`, `next`. Run `python3 scripts/pipeline_state.py --help`.
+pending checkpoint. Other subcommands: `init`, `set-goal`, `next`, `advance`,
+`block`, `checkpoint`, and `signoff` (the author clears a raised checkpoint so
+the loop can advance). Run `python3 scripts/pipeline_state.py --help`.
+
+## Worked example (one loop, end to end)
+
+Author: *"Take my idea + results to a submission-ready paper for NeurIPS 2026."*
+
+```
+# GOAL — record the target and open the durable log
+python3 scripts/pipeline_state.py init --workspace paper-workspace
+python3 scripts/pipeline_state.py set-goal --workspace paper-workspace \
+    --goal "submission-ready for NeurIPS 2026 main track" \
+    --venue "NeurIPS 2026" --track main --deadline "2026-05-15 AoE"
+```
+
+**Lock requirements first (hard stop).** Before planning, run `parse-cfp` on the
+live CFP — never the cached `venues/conferences/neurips-2026.yml`. Suppose it
+returns a 9-page limit and double-blind review, each carrying a source URL + the
+date fetched. Raise the checkpoint and wait:
+
+```
+python3 scripts/pipeline_state.py checkpoint --workspace paper-workspace \
+    --stage parse-cfp \
+    --question "9pp, double-blind, NeurIPS checklist required, AoE deadline — confirm before we build on these?"
+```
+
+The author confirms. Now **PLAN**: show the stage list from the pipeline map
+adapted to the draft's state (a half-written `.tex`, no related work yet), get
+approval, then **EXECUTE** one stage — say `preflight-check`. **VERIFY on an
+external signal**, not the model's say-so: `check_sections.py` exits 0 and the
+PDF is 9 pages against the 9-page live limit. **REFLECT**: the desk-reject count
+went 2 → 0, an improvement, so accept. Record it and raise the next checkpoint:
+
+```
+python3 scripts/pipeline_state.py advance --workspace paper-workspace \
+    --stage preflight-check --signal "check_sections.py exit 0; 9pp <= 9 live limit; anonymizer clean"
+python3 scripts/pipeline_state.py status --workspace paper-workspace   # done / next / blocked
+```
+
+If a later stage exposes a gap — e.g. `simulate-reviewers` predicts R2 will ask
+for an ablation the author doesn't have — that is a **blocker, not something to
+fabricate**: `block --stage simulate-reviewers --on "missing ablation R2 will ask for"`,
+surface it, and let the author decide. Submission is never the orchestrator's
+action: it hands over a ready package and stops.
 
 ## Stop conditions (so the loop can't spin forever)
 
-Configurable, but always present (mirrors the VMAO stop set):
+Configurable, but always present — the loop must terminate:
 
 - **Stage exit met** — the measurable criterion in the pipeline map passes.
 - **Diminishing returns** — a reflect pass improves the metric by less than a
@@ -127,12 +169,14 @@ Configurable, but always present (mirrors the VMAO stop set):
 ## Live verification is mandatory
 
 Venue rules change every cycle and the model's memory of them is stale by
-construction (principle #5). Before any stage relies on a deadline, page limit,
-blinding level, template, checklist, or artifact-badge rule, re-fetch it from
-the live CFP via `parse-cfp` and prefer that over any
-`venues/conferences/*.yml` cached profile. Overconfidence is **highest right
-after** a fetch, so re-check the fetched fact against the primary source before
-acting on it. Never hardcode a venue rule into this skill.
+construction. Before any
+stage relies on a deadline, page limit, blinding level, template, checklist, or
+artifact-badge rule, re-fetch it from the live CFP via `parse-cfp` and prefer
+that over any `venues/conferences/*.yml` cached profile. Every venue fact the
+orchestrator carries into a checkpoint must keep its source URL and the date it
+was fetched, so the author can click through and confirm. Overconfidence is
+**highest right after** a fetch, so re-check the fetched fact against the
+primary source before acting on it. Never hardcode a venue rule into this skill.
 
 ## Output
 
@@ -145,11 +189,11 @@ acting on it. Never hardcode a venue rule into this skill.
 
 ## Adapt to your discipline
 
-The pipeline map targets CS venues (IEEE/ACM/ML). Fork it: reorder stages for a
-journal (revise-and-resubmit instead of rebuttal), swap citation norms, and
-adjust which checklists/artifact tracks apply (NeurIPS checklist vs ACL
-Responsible-NLP vs an artifact-evaluation track with its own post-acceptance
-deadline). Keep the stage gates; change what runs inside them.
+The pipeline map includes common conference and journal rails. Fork it: reorder
+stages for a journal (revise-and-resubmit instead of rebuttal), swap citation
+norms, and adjust which checklists, ethics statements, data policies, or
+artifact tracks apply in your field. Keep the stage gates; change what runs
+inside them.
 
 ## Guardrails
 
@@ -172,8 +216,8 @@ deadline). Keep the stage gates; change what runs inside them.
 
 ## Memory
 
-Uses the shared `.paper-memory/` convention (full spec:
-[`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+Uses the shared `.paper-memory/` convention described by
+[`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md).
 
 - **At start:** read `profile.yml` (positioning), `lessons.md` (recurring
   habits to watch for across stages), and `decisions.md` (prior venue/track

@@ -1,25 +1,18 @@
 ---
 name: prepare-camera-ready
-description: >-
-  Step-by-step camera-ready preparation for accepted papers. Use when a
-  researcher says camera-ready, final version, my paper got accepted, or
-  mentions ACM eRights, TAPS, ORCID, IEEE PDF eXpress, eCF, OpenReview final
-  upload, de-anonymization, or extra camera-ready pages. Resolves the venue's
-  rail from a machine-readable profile and walks it end to end. Generates an
-  ordered checklist with deadlines and page rules, and lints the final source
-  for leftover anonymization and missing rights blocks. Advisory only; it never
-  completes forms or submits anything.
+description: Step-by-step camera-ready prep for accepted papers — the error-prone final stage before publication. Use when a researcher says "camera-ready", "final version", or "my paper got accepted, now what", or mentions ACM eRights / rights form / TAPS / ORCID / DOI block, IEEE PDF eXpress / conference ID / eCF copyright form / Xplore, OpenReview final upload, de-anonymization, or extra camera-ready pages. Resolves the venue's rail from a machine-readable profile and walks it end to end across ACM eRights, ORCID, rights/DOI block, TAPS source upload, IEEE PDF eXpress, conference IDs, file naming, eCF exact-title match, registration/no-show, NeurIPS-style [final] recompile, and OpenReview upload. Generates an ordered checklist with deadlines and +page rules, and lints the final .tex for leftover anonymization and missing rights blocks via bundled stdlib-only scripts. Advisory — it prepares, explains, and lints, but never completes a form or submits anything.
 ---
 
 # Prepare Camera-Ready
 
-Walk an accepted paper through the camera-ready pipeline — the most
-error-prone, least documented stage of publishing. The rules are tribal
-knowledge split across two big rails (ACM: eRights → ORCID → rights/DOI
-block → TAPS; IEEE: PDF eXpress → file naming → eCF → registration) plus the
-OpenReview-direct rail used by ML venues. This skill turns the venue profile
-into an ordered checklist, walks each form and upload with the user, and
-lints the final source for the mistakes that delay or block publication.
+Walk an accepted paper through the camera-ready pipeline. The rules are
+tribal knowledge split across two big rails (ACM: eRights → ORCID →
+rights/DOI block → TAPS; IEEE: PDF eXpress → file naming → eCF →
+registration) plus the OpenReview-direct rail used by ML venues, and they
+change every cycle. This skill turns the venue profile into an ordered
+checklist, walks each form and upload with the user, and lints the final
+source for the mistakes that delay or block publication — but the user does
+every irreversible click.
 
 ## When to use
 
@@ -117,6 +110,43 @@ lints the final source for the mistakes that delay or block publication.
   metadata) applied with the user's approval.
 - A lint report (PASS / PASS-WITH-WARNINGS / FAIL with `file:line`) plus the
   list of remaining manual gates and their dates.
+
+## Worked example
+
+A paper accepted at an ACM/TAPS venue, still in its submission state: it
+carries `[review,anonymous]`, the acmart placeholder DOI/ISBN, an "Anonymous
+Author(s)" block, and an `anonymous.4open.science` link, with no rights block
+or CCS concepts yet. Linting the source against the venue profile:
+
+```
+python3 scripts/check_camera_ready.py paper.tex \
+    --venue venues/conferences/sigspatial-2026.yml --track Research
+```
+
+```
+ERROR final/submission-mode-option       paper.tex:1   documentclass still carries [review] — camera-ready must drop submission/review-mode options
+ERROR final/submission-mode-option       paper.tex:1   documentclass still carries [anonymous] — ...
+ERROR final/anonymous-placeholder        paper.tex:7   anonymization placeholder still present: '\author{Anonymous'
+ERROR final/anonymized-link              paper.tex:10  anonymized artifact link still present: 'anonymous.4open.science' — swap in the real repository URL
+ERROR acm/rights-block-missing                     -   \acmConference (or \acmJournal) not found — part of the eRights rights/DOI block
+ERROR acm/placeholder-rights-value       paper.tex:4  \acmDOI{10.1145/nnnnnnn.nnnnnnn} looks like the acmart template placeholder — replace it with YOUR eRights value
+ERROR acm/ccs-concepts-missing                     -   CCS concepts missing (CCSXML block + \ccsdesc) — generate them at https://dl.acm.org/ccs; TAPS requires them
+ERROR acm/keywords-missing                         -   \keywords{...} missing — mandatory in ACM camera-ready
+WARN  final/review-artifact              paper.tex:3   review-time artifact still present: '\linenumbers'
+
+verdict: FAIL (rail=acm-taps, errors=8, warnings=1)
+reminder: a clean lint covers the SOURCE only — rights forms, PDF eXpress, eCF, and registration remain manual steps.
+```
+
+How to present this: lead with the ERRORs as an ordered fix-list — drop
+`[review,anonymous]`, restore the real author block, swap the
+`anonymous.4open.science` URL, paste the rights/DOI block and CCS/keywords
+from the completed eRights form — each with its `file:line` and the one-line
+edit; then the `\linenumbers` WARN as a judgment call. Note the order: the
+rights-block and CCS errors cannot clear until the eRights form is done, so
+the form is the gating dependency, not the source edit. Re-run the linter
+after each fix until it PASSes, and remind the user the lint never sees the
+form, the TAPS upload, or the proofs.
 
 ## Adapt to your discipline
 

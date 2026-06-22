@@ -96,20 +96,35 @@ hard gates:
    Assign each retrieved paper to one of the step-2 required clusters (a
    paper that fits none is an outlier — keep only if reviewer-expected).
    Write the assignment into a small plan file (one block per required
-   cluster, listing the verified cite keys assigned), then run:
+   cluster, listing the cite keys assigned). **Tag each key by evidence tier**
+   so precision stays visible and the floor cannot be met by padding — append
+   `!graph` / `!keyword` / `!heuristic` to a key the paper is *not confirmed*
+   to cite (an untagged key means "the paper is known to cite this"):
+
+   ```
+   "refs": ["li2018deep", "yao2019computing",          # confirmed-cited
+            "smith2023!graph",   # surfaced by citation-graph edge — plausible
+            "doe2022!heuristic"] # 'a strong paper would cite this' — weakest
+   ```
+
+   Then run:
 
    ```
    python3 scripts/check_coverage.py plan.json   # or plan.txt (see --help)
    ```
 
-   It FAILs (exit 3) on any required cluster with **zero** citations and
-   WARNs on any cluster below the per-cluster citation floor (default 2 — a
-   cluster resting on a single citation is a reviewer target). On a failing
+   Only **confirmed-cited** refs count toward the floor. The gate FAILs
+   (exit 3) on any required cluster with **zero confirmed cites** — including
+   one "covered" only by speculative refs (padding masks a real hole) — and
+   WARNs below the floor (default 2). It also prints a **precision estimate**
+   (confirmed / total) and caps heuristic-only additions (default 2 across the
+   plan, `--heuristic-cap`) so the core set stays scope-justified. On a failing
    or thin cluster, take its emitted **second-pass retrieval worklist** back
-   to `find-papers` and fill the gap, then re-run — do NOT draft over an
-   empty required cluster or ship it as a silent author to-do. Only when the
-   gate clears (or the user explicitly accepts a documented thin cluster)
-   proceed to clustering prose.
+   to `find-papers` and fill the gap with *confirmed* cites, then re-run — do
+   NOT draft over an empty required cluster, satisfy the floor by padding with
+   speculative refs, or ship a gap as a silent author to-do. Only when the gate
+   clears (or the user explicitly accepts a documented thin cluster) proceed to
+   clustering prose.
 
 6. **Cluster and articulate the delta per cluster.** With coverage cleared,
    group the pool into 3–6 themes along the axis that makes *this* paper's
@@ -159,6 +174,12 @@ hard gates:
 - A short positioning summary: the required clusters derived from scope and
   whether each cleared the coverage gate, per-cluster delta, the closest
   competitor and the precise distinction, plus anything left unverified.
+- The coverage gate's **precision estimate** (confirmed-cited / total refs)
+  and any **speculative additions** (graph/keyword/heuristic tier) called out
+  explicitly as plausible-but-unconfirmed, so the user can prune them before
+  submission rather than treating cluster-floor satisfaction as proof of
+  citation. When the ground truth is a known subset, report recall against
+  that subset separately from this precision band.
 - If any required cluster could not be filled, the second-pass retrieval
   worklist (for `find-papers`) reported explicitly — never buried as a silent
   author to-do.
@@ -179,6 +200,14 @@ hard gates:
   to the user — the skill does not silently decide a gap is acceptable.
 - Calibrate length and breadth to the venue family's measured exemplar median,
   not maximal coverage; over-citing to look thorough reads as survey drift.
+- Precision is a first-class quality signal, not just recall. A reference the
+  paper is not confirmed to cite (a citation-graph neighbor, a keyword hit, or
+  a "a strong paper would cite this" hunch) is a *hypothesis*, not a hit: tag
+  it by tier, never promote it to the same status as a confirmed cite, and cap
+  hunch-only additions. Adjacent/foundational clusters get ranked by
+  load-bearing necessity and trimmed to the floor plus the few most-cited
+  canonical members — defer the rest to an optional pool rather than padding a
+  section beyond what the paper actually carries.
 - Never misstate what a cited paper does to inflate the delta — strawman
   characterizations are the fastest way to a hostile reviewer (who is often
   the cited author).
@@ -206,6 +235,10 @@ hard gates:
 - `scripts/gather_candidates.py` — fetch metadata for retrieved identifiers
   into a transient clustering worksheet (polite, one paper at a time).
 - `scripts/check_coverage.py` — deterministic coverage gate: FAIL on any
-  required cluster with zero verified citations, WARN below the citation
-  floor, emit a targeted second-pass retrieval worklist for `find-papers`.
+  required cluster with zero *confirmed-cited* citations (including one padded
+  only with speculative refs), WARN below the citation floor, report a
+  precision estimate (confirmed/total) and a per-plan heuristic-tier cap, and
+  emit a targeted second-pass retrieval worklist for `find-papers`. Cite keys
+  carry an optional evidence-tier marker (`key!graph` / `!keyword` /
+  `!heuristic`); only confirmed (untagged) keys count toward the floor.
 - `scripts/audit_bib.py` — offline citation/bib audit and style census.

@@ -1,7 +1,7 @@
 # Format (c): revise-and-resubmit package with change-log response document
 
 For venues whose profile says `review.rebuttal_format: revise-and-resubmit`
-— CHI's 5-week R&R cycle is the conference archetype; SIGMOD/ICDE-style
+— CHI's roughly month-long R&R cycle is the conference archetype; SIGMOD/ICDE-style
 revision rounds and journal major/minor revisions (TKDE, TODS via
 ScholarOne/Manuscript Central) follow the same package shape. Windows,
 highlighting requirements, and length rules vary: re-verify on the live
@@ -28,8 +28,8 @@ letter/1AC letter as the binding instruction set.
 - The audience re-reads selectively: the response document must let each
   reviewer find *their* points and the exact location of each change
   without re-reading the whole paper.
-- It is still a gate, not an acceptance: CHI historically rejects up to
-  half of R&R papers in round 2; journals can reject after a major
+- It is still a gate, not an acceptance: CHI rejects a substantial share
+  of R&R papers in round 2, and journals can reject after a major
   revision. Address everything; the most common round-2 kill is a point
   the authors silently skipped.
 
@@ -99,16 +99,19 @@ carry location anchors.
 **CHI-style (conference R&R).** Reviews arrive with a 1AC meta-review
 that often enumerates the changes the committee expects — treat that list
 as the priority order; the matrix should mark which reviewer points the
-1AC endorsed. ~5-week window (CHI 2026: reviews 2025-11-04, resubmission
-2025-12-04), submitted via PCS as revised PDF + response document. Word
-limits still apply to the revised paper; anonymization rules persist.
+1AC endorsed. Window of roughly 4–5 weeks depending on the cycle (e.g.
+CHI 2026 ran reviews-released to resubmission in ~4 weeks — confirm the
+exact dates on the live CHI timeline, they shift every cycle), submitted
+via PCS as revised PDF + response document. Word limits still apply to the
+revised paper; anonymization rules persist.
 
 **Journal major/minor revision (TKDE/TODS-style).** Deadlines are months,
 set in the decision letter; minor revision usually means the editor
 checks the response alone, major revision goes back to the same
 reviewers — write the response document for whoever rejected you, not the
-editor. Page/length limits still bind (TKDE 14 pages including
-references and biographies). Submission via ScholarOne/Manuscript
+editor. Page/length limits still bind (e.g. TKDE has run a 14-page limit
+including references and biographies — confirm the current figure in the
+journal's author guidelines). Submission via ScholarOne/Manuscript
 Central as a new version with response files attached. An expired
 revision deadline often converts to "reject + new submission" — calendar
 it on receipt.

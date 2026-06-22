@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"></a>
-  <a href="#find-the-skill-you-need"><img src="https://img.shields.io/badge/skills-41-blue.svg" alt="41 skills"></a>
+  <a href="#find-the-skill-you-need"><img src="https://img.shields.io/badge/skills-42-blue.svg" alt="42 skills"></a>
   <a href="#what-it-wont-do"><img src="https://img.shields.io/badge/paper_content-never_bundled-success.svg" alt="no paper content bundled"></a>
   <a href="#how-it-works"><img src="https://img.shields.io/badge/venue_rules-built_live-orange.svg" alt="venue rules built live"></a>
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/standard-agentskills.io-black.svg" alt="agentskills.io"></a>
@@ -24,7 +24,7 @@
   <sub>
     <a href="#quick-start-60-seconds">Quick start</a> ·
     <a href="#how-it-works">How it works</a> ·
-    <a href="#find-the-skill-you-need">All 41 skills</a> ·
+    <a href="#find-the-skill-you-need">All 42 skills</a> ·
     <a href="#common-workflows">Workflows</a> ·
     <a href="#integrations">Integrations</a> ·
     <a href="#what-it-wont-do">Boundaries</a>
@@ -125,7 +125,7 @@ folder and let the skills build the research workflow around it.
 ## Find the skill you need
 
 Open the linked `SKILL.md` for trigger rules, process, guardrails, references,
-and bundled scripts. The complete public package currently contains 41 skills.
+and bundled scripts. The complete public package currently contains 42 skills.
 
 **Start here**
 
@@ -146,6 +146,7 @@ and bundled scripts. The complete public package currently contains 41 skills.
 | Discover | [`fetch-paper`](skills/fetch-paper/SKILL.md) | Fetch legal open-access copies. |
 | Discover | [`study-exemplars`](skills/study-exemplars/SKILL.md) | Study strong papers from a target venue. |
 | Discover | [`literature-review`](skills/literature-review/SKILL.md) | Build a structured, citation-grounded review. |
+| Write | [`draft-survey`](skills/draft-survey/SKILL.md) | Produce a ranked reading list and standalone survey draft. |
 | Write | [`write-abstract`](skills/write-abstract/SKILL.md) | Draft, revise, or lint a venue-aware abstract. |
 | Write | [`draft-related-work`](skills/draft-related-work/SKILL.md) | Position related work against verified references. |
 | Write | [`polish-prose`](skills/polish-prose/SKILL.md) | Tighten academic prose without changing claims. |
@@ -181,16 +182,17 @@ and bundled scripts. The complete public package currently contains 41 skills.
 ## Common workflows
 
 ```text
-New paper:       paper-profile -> literature-review -> write-abstract -> draft-related-work -> polish-prose
-Before submit:   parse-cfp -> tailor-to-venue -> anonymize-paper -> preflight-check
-Quality pass:    verify-citations -> check-originality -> benchmark-paper -> simulate-reviewers -> assess-paper
-Reflection:      reflect-paper -> polish-prose / verify-claims -> reflect-and-improve
-Length pass:     fit-page-limit -> polish-prose / refactor-structure / polish-tables-figures
-Overleaf:        work-with-overleaf -> preflight-check / verify-citations / polish-prose -> work-with-overleaf
-Artifacts:       test-research-code -> verify-results -> refactor-research-code -> prepare-artifacts
-Reviews are in:  triage-reviews -> write-rebuttal
-Accepted:        prepare-camera-ready -> make-slides -> write-talk-script -> rehearse-qa -> make-poster
-End to end:      orchestrate-paper
+New paper:        paper-profile -> literature-review -> write-abstract -> draft-related-work -> polish-prose
+Survey draft:     find-papers -> draft-survey -> verify-citations -> polish-prose
+Before submit:    parse-cfp -> tailor-to-venue -> anonymize-paper -> preflight-check
+Quality pass:     verify-citations -> check-originality -> benchmark-paper -> simulate-reviewers -> assess-paper
+Reflection:       reflect-paper -> polish-prose / verify-claims -> reflect-and-improve
+Length pass:      fit-page-limit -> polish-prose / refactor-structure / polish-tables-figures
+Overleaf:         work-with-overleaf -> preflight-check / verify-citations / polish-prose -> work-with-overleaf
+Artifacts:        test-research-code -> verify-results -> refactor-research-code -> prepare-artifacts
+Reviews are in:   triage-reviews -> write-rebuttal
+Accepted:         prepare-camera-ready -> make-slides -> write-talk-script -> rehearse-qa -> make-poster
+End to end:       orchestrate-paper
 ```
 
 ## Usage examples
@@ -199,6 +201,7 @@ End to end:      orchestrate-paper
 |---|---|
 | *"Will this get desk-rejected at an IEEE conference? Check my `main.tex` against this CFP."* | A preflight report with template, page-limit, anonymization, checklist, and policy risks tied to live requirements. |
 | *"Verify `refs.bib` and flag fabricated or mismatched citations."* | Entries checked against scholarly metadata sources, with wrong years, duplicates, suspicious records, and unresolved references surfaced. |
+| *"Write a ranked reading list and two-column arXiv survey draft on geospatial data conflation."* | A verified reading list, taxonomy, original-prose survey draft, and clean bibliography grounded in real resolved papers. |
 | *"Humanize this section, but do not change any claims."* | Cleaner academic prose with AI-tell phrasing removed while numbers, results, and citations stay fixed. |
 | *"I am one page over the limit; what should I cut?"* | A section-budget map plus a ranked compression plan that preserves the paper's core evidence. |
 | *"Turn these reviews into a rebuttal plan with severity and effort."* | A point-by-point matrix, prioritized response strategy, and handoff to the rebuttal skill. |
@@ -241,7 +244,7 @@ references, so any agent that understands the Agent Skills format can use it.
 Optional Claude Code plugin bundles currently exposed in
 `.claude-plugin/marketplace.json`: `paper-search`, `paper-writing`,
 `paper-submission`, and `paper-presenting`. Use the Agent Skills CLI above to
-install the complete 41-skill package.
+install the complete 42-skill package.
 
 Manual install for tools with their own skills directory:
 
@@ -304,7 +307,7 @@ outputs only.
 
 ```text
 assets/                         README and community visuals
-skills/                         41 agent skills
+skills/                         42 agent skills
   <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance
   <skill>/scripts/               deterministic helper scripts

@@ -18,6 +18,15 @@ Subcommands:
   check-keys assert references.bib uses exactly the corpus's included-paper
             keys (no drift, no duplicates) -- the cross-file consistency gate
             that keeps the corpus, the .bib, and the review's [@key]s aligned.
+  verify-audit reconcile 'verified' flags against a verify-citations --json
+            report: verifies ONLY entries the report confirmed, clears the
+            rest, and echoes the verdict (PASS/PARTIAL-PASS/FAIL) verbatim so
+            no prose can launder it into "verified, 0 errors".
+
+Setting "verified" carries PROVENANCE. `set --verified yes` requires --source
+(the index whose canonical record confirmed the entry) and records when; or
+use `verify-audit` to set it from an actual verify-citations artifact. A
+verified flag with no provenance is a broken gate, not a pass.
 
 corpus.py is the SINGLE SOURCE OF TRUTH for cite keys (see make_key): keys are
 minted on import and reused by `bibtex`; never hand-edit a key in the .bib.
@@ -28,7 +37,8 @@ Examples:
       --doi 10.1145/3589132.3625571 --year 2024 --venue SIGSPATIAL
   python3 corpus.py import --corpus c.json --source dblp hits.json
   python3 corpus.py set --corpus c.json li2024learned --screened included
-  python3 corpus.py set --corpus c.json li2024learned --verified yes
+  python3 corpus.py set --corpus c.json li2024learned --verified yes --source dblp
+  python3 corpus.py verify-audit --corpus c.json --report citecheck.json
   python3 corpus.py list --corpus c.json --screened included --json
   python3 corpus.py bibtex --corpus c.json > references.bib
 
@@ -98,6 +108,12 @@ def new_paper(**kw) -> dict:
             "fetched": False,
             "extracted": False,
             "verified": False,
+            # Provenance for the verified flag. "verified": true is ONLY
+            # trustworthy when an actual verify-citations round-trip set these:
+            # which provider's canonical record confirmed the entry, and when.
+            # A verified flag with no verified_via is a broken gate, not a pass.
+            "verified_via": None,
+            "verified_at": None,
         },
     }
 
@@ -219,11 +235,35 @@ def cmd_set(args) -> None:
     if args.screened:
         rec["status"]["screened"] = args.screened
         changed.append(f"screened={args.screened}")
-    for flag in ("fetched", "extracted", "verified"):
+    for flag in ("fetched", "extracted"):
         val = getattr(args, flag)
         if val is not None:
             rec["status"][flag] = YESNO[val]
             changed.append(f"{flag}={val}")
+    if args.verified is not None:
+        want = YESNO[args.verified]
+        if want:
+            # "verified": true must carry provenance from an actual
+            # verify-citations round-trip THIS session -- the provider whose
+            # canonical record confirmed the entry. Flipping the flag without
+            # provenance is exactly the broken gate (verified:true with no
+            # artifact) this enforcement exists to prevent. Refuse it.
+            if not args.source:
+                fail("--verified yes requires --source <provider> (the index "
+                     "whose canonical record confirmed this entry: "
+                     "dblp/crossref/s2/arxiv/datacite). A verified flag with "
+                     "no provenance is a broken gate, not a pass. Set it from "
+                     "an actual verify-citations run -- or use the audit path: "
+                     "corpus.py verify-audit --report citecheck.json", 2)
+            rec["status"]["verified"] = True
+            rec["status"]["verified_via"] = args.source
+            rec["status"]["verified_at"] = date.today().isoformat()
+            changed.append(f"verified=yes (via {args.source})")
+        else:
+            rec["status"]["verified"] = False
+            rec["status"]["verified_via"] = None
+            rec["status"]["verified_at"] = None
+            changed.append("verified=no")
     if args.theme is not None:
         rec["theme"] = args.theme or None
         changed.append(f"theme={args.theme}")
@@ -293,9 +333,25 @@ def cmd_stats(args) -> None:
     print(f"Corpus: {corpus.get('topic', '?')}")
     for label, c in counts.items():
         print(f"  {label:<24} {c}")
+    # A verified flag with no recorded provenance is a broken gate -- surface it
+    # rather than letting it read as a clean "verified" count.
+    no_prov = sorted(
+        k for k, p in corpus["papers"].items()
+        if p["status"]["verified"] and not p["status"].get("verified_via")
+    )
+    if no_prov:
+        print(f"\n  WARNING: {len(no_prov)} entr"
+              f"{'y' if len(no_prov) == 1 else 'ies'} marked verified with NO "
+              f"provenance (verified_via unset) -- a broken gate, not a pass. "
+              f"Re-confirm via verify-citations: {', '.join(no_prov)}")
 
 
-BIB_TYPE_HINTS = ("journal", "transactions", "tods", "tkde", "vldb j")
+# Generic, field-agnostic words in a venue string that mark a journal (so the
+# skeleton entry is @article, not @inproceedings). Container-kind words only --
+# never a specific venue/journal name -- so this stays portable across fields.
+# verify-citations reconciles the type against the canonical record anyway.
+BIB_TYPE_HINTS = ("journal", "transactions", "letters", "review",
+                  "quarterly", "annals", "acta")
 
 
 def bib_escape(s: str) -> str:
@@ -399,6 +455,93 @@ def cmd_check_keys(args) -> None:
     print("\nRESULT: PASS (corpus keys and .bib keys are in lock step)")
 
 
+def cmd_verify_audit(args) -> None:
+    """Reconcile corpus 'verified' flags against an actual verify-citations
+    JSON report (check_bibtex.py --json), and echo the verdict verbatim.
+
+    This is the honest, batchable path to setting 'verified': instead of
+    flipping flags by hand, point at the machine artifact. The audit:
+      - sets verified:true ONLY for entries the report confirmed (status
+        VERIFIED/VERIFIED*, no ERROR flag), recording
+        verified_via='verify-citations' + the date for provenance;
+      - clears verified for every entry the report did NOT confirm --
+        errored, unresolved, skipped, or absent from the report alike;
+      - REFUSES to treat a PARTIAL-PASS or FAIL report as a clean pass --
+        it mirrors the report's exact verdict_line so no prose can launder
+        'PARTIAL-PASS, N WARN, K skipped' into 'verified, 0 errors'.
+    """
+    corpus = load_corpus(args.corpus)
+    rp = Path(args.report)
+    if not rp.exists():
+        fail(f"report not found: {args.report}\n"
+             "Produce it first: check_bibtex.py refs.bib --json citecheck.json")
+    try:
+        report = json.loads(rp.read_text(encoding="utf-8"))
+    except ValueError as e:
+        fail(f"report is not valid JSON: {e}")
+    if not isinstance(report, dict) or "entries" not in report:
+        fail("report is not a check_bibtex.py --json report (no 'entries')")
+
+    verdict = report.get("verdict", "UNKNOWN")
+    verdict_line = report.get("verdict_line") or verdict
+    # Per-entry status keyed by cite key. check_bibtex entries carry a "key".
+    by_key = {}
+    for e in report.get("entries", []):
+        k = e.get("key")
+        if k:
+            by_key[k] = e
+
+    verified_now, cleared, missing = [], [], []
+    today = date.today().isoformat()
+    for key, rec in corpus["papers"].items():
+        if rec["status"]["screened"] != "included":
+            continue
+        e = by_key.get(key)
+        if e is None:
+            missing.append(key)
+            continue
+        status = e.get("status", "")
+        has_error = any(f.get("severity") == "ERROR" for f in e.get("flags", []))
+        if status in ("VERIFIED", "VERIFIED*") and not has_error:
+            rec["status"]["verified"] = True
+            rec["status"]["verified_via"] = "verify-citations"
+            rec["status"]["verified_at"] = today
+            verified_now.append(key)
+        else:
+            # Not confirmed by the report -> not verified, no matter what the
+            # flag said before. A skipped/errored/unresolved entry is NOT a pass.
+            if rec["status"]["verified"]:
+                cleared.append(key)
+            rec["status"]["verified"] = False
+            rec["status"]["verified_via"] = None
+            rec["status"]["verified_at"] = None
+
+    corpus.setdefault("verify_runs", []).append(
+        {"date": today, "report": args.report, "verdict": verdict,
+         "verdict_line": verdict_line, "verified": len(verified_now)})
+    save_corpus(args.corpus, corpus)
+
+    print(f"verify-audit: {args.report} against {args.corpus}")
+    print(f"  VERDICT (verbatim from report): {verdict_line}")
+    print(f"  {len(verified_now)} entr"
+          f"{'y' if len(verified_now) == 1 else 'ies'} marked verified "
+          f"(via verify-citations).")
+    if cleared:
+        print(f"  {len(cleared)} previously-verified entr"
+              f"{'y' if len(cleared) == 1 else 'ies'} CLEARED (the report did "
+              f"not confirm them): {', '.join(sorted(cleared))}")
+    if missing:
+        print(f"  {len(missing)} included corpus key(s) absent from the report "
+              f"-- NOT verified: {', '.join(sorted(missing))}")
+    if verdict != "PASS":
+        print(f"\n  {verdict} is NOT a clean pass. Mirror the verdict line "
+              "above verbatim in the review's prose -- do not collapse it into "
+              "'verified, 0 errors'. Re-run verify-citations on the open items "
+              "before declaring the bibliography verified.")
+        sys.exit(2)
+    print("\nRESULT: PASS -- every included entry confirmed by the report.")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -437,6 +580,10 @@ def main() -> None:
     ps.add_argument("--fetched", choices=sorted(YESNO))
     ps.add_argument("--extracted", choices=sorted(YESNO))
     ps.add_argument("--verified", choices=sorted(YESNO))
+    ps.add_argument("--source",
+                    help="provider whose canonical record confirmed the entry "
+                    "(dblp/crossref/s2/arxiv/datacite); REQUIRED with "
+                    "--verified yes so the verified flag carries provenance")
     ps.add_argument("--theme", help="theme slug (empty string clears)")
     ps.add_argument("--reason", help="screening reason, e.g. 'out of scope: not spatial'")
     ps.set_defaults(func=cmd_set)
@@ -461,6 +608,15 @@ def main() -> None:
         help="assert references.bib uses exactly the corpus's included keys")
     pck.add_argument("bib", help="path to references.bib")
     pck.set_defaults(func=cmd_check_keys)
+
+    pva = sub.add_parser(
+        "verify-audit",
+        help="reconcile verified flags against a verify-citations --json "
+        "report; mirrors the verdict verbatim, refuses to pass a "
+        "PARTIAL-PASS/FAIL")
+    pva.add_argument("--report", required=True,
+                     help="path to check_bibtex.py --json output")
+    pva.set_defaults(func=cmd_verify_audit)
 
     args = p.parse_args()
     args.func(args)

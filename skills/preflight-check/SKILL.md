@@ -1,16 +1,6 @@
 ---
 name: preflight-check
-description: >-
-  Deterministic desk-reject preflight linter for LaTeX paper submissions. Use
-  it when a researcher asks "is my paper ready to submit", or mentions
-  preflight, desk reject, submission check, page limit, anonymization,
-  double-blind, missing checklist, or format/template compliance for a
-  conference such as NeurIPS, ICML, CHI, SIGSPATIAL, SIGMOD, ICDE, CVPR, or
-  LNCS. Lints the .tex source against a machine-readable venue profile,
-  checking documentclass and style-file options, margin/template tampering,
-  anonymization leaks, required sections, abstract length, keywords format, and
-  page-limit risk, with every finding reported with file and line. Runs bundled
-  stdlib-only Python scripts; advisory only, never submits anything.
+description: Deterministic desk-reject preflight linter for LaTeX paper submissions. Use it when a researcher asks "is my paper ready to submit", or mentions preflight, desk reject, submission check, page limit, anonymization, double-blind, missing checklist, or format/template compliance for a conference (NeurIPS, ICML, CHI, SIGSPATIAL, SIGMOD, ICDE, CVPR, LNCS...). Lints the .tex source against a machine-readable venue profile for documentclass and style-file options, margin/template tampering (geometry, savetrees, spacing hacks), anonymization leaks (author block, acknowledgments, repo links, first-person self-citations, \thanks, pdfauthor), required sections (NeurIPS checklist, ICML impact statement, AI-use acknowledgement, COI, CCS concepts/keywords), abstract length, keywords format, and page-limit risk. Every finding is reported with file:line. Runs bundled stdlib-only Python scripts; advisory only, never submits anything.
 ---
 
 # Preflight Check
@@ -101,13 +91,57 @@ This skill catches them while there is still time to fix them.
 
 A findings report (text or `--json`) per checker or combined via
 `run_preflight.py`: severity, check id, `file:line`, message, summary counts,
-and a PASS / PASS-WITH-WARNINGS / FAIL verdict. Present it to the user as a
-fix-list ordered by severity, then offer to apply fixes one at a time.
+and a verdict (`FAIL` if any ERROR, `PASS with warnings` if only WARNs, else
+`PASS`). Present it to the user as a fix-list ordered by severity, then offer
+to apply fixes one at a time.
+
+## Worked example
+
+A NeurIPS submission that still carries author identity and last year's style
+file. Running the combined checker:
+
+```
+python3 scripts/run_preflight.py paper.tex \
+    --venue venues/conferences/neurips-2026.yml
+```
+
+```
+=============================================================================
+PREFLIGHT REPORT  paper.tex
+venue: neurips-2026   track: main
+=============================================================================
+
+-- template --------------------------------------------------------------
+   [ERROR] template/style-file-year             paper.tex:1 — uses neurips_2025.sty; NeurIPS 2026 requires neurips_2026.sty
+   [WARN ] template/negative-vspace             paper.tex:312 — negative \vspace before figure; isolated, likely fine
+
+-- anonymization ---------------------------------------------------------
+   [ERROR] anonymization/pdf-metadata           paper.tex:14 — \hypersetup{pdfauthor=...} leaks the author into PDF metadata
+   [WARN ] anonymization/author-block           paper.tex:22 — \author populated; the .sty hides it at submission, but scrub the source
+   [WARN ] anonymization/self-citation          paper.tex:88 — "our previous work [12]" — rewrite in third person
+
+-- sections --------------------------------------------------------------
+   [ERROR] sections/missing:neurips-checklist   paper.tex — no NeurIPS checklist found; a missing checklist is a desk reject
+
+-- abstract --------------------------------------------------------------
+   clean.
+
+=============================================================================
+VERDICT: FAIL — fix ERRORs before submitting   (3 error(s), 3 warning(s), 0 info)
+Profiles can go stale: re-verify limits/policies at https://neurips.cc/Conferences/2026/CallForPapers
+=============================================================================
+```
+
+How to present this: lead with the three ERRORs as a numbered fix-list
+(`neurips_2026.sty`, drop the `pdfauthor` leak, add the checklist), each with
+its `file:line` and the one-line edit; then walk the WARNs as judgment calls.
+Re-verify the page limit and checklist requirement at the `cfp_url` before the
+user relies on the verdict, then re-run the affected checker after each fix.
 
 ## Adapt to your discipline
 
-Profiles target CS venues (ACM/IEEE/ML/LNCS). For other fields, fork and add
-venue YAMLs with your journals' rules — the checkers only read the profile,
+Profiles can represent conferences, journals, and workshops in any field. Add
+venue YAMLs with your community's rules — the checkers only read the profile,
 so new disciplines need data, not code.
 
 ## Guardrails
@@ -126,7 +160,7 @@ so new disciplines need data, not code.
 ## Memory
 
 This skill uses the shared `.paper-memory/` convention in the user's paper
-directory (full spec: [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md)).
+directory, following [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md).
 
 - **At start:** read `.paper-memory/lessons.md` (and `profile.yml` for venue
   tier / constraints). Skip re-flagging issues already recorded and acted on;

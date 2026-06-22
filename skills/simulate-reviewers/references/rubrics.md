@@ -10,7 +10,7 @@ overall scales emitted by `scripts/review_form.py`.
 
 ## Table of contents
 
-- [Core rubric dimensions (1–5)](#core-rubric-dimensions-1-5)
+- [Core rubric dimensions (1–5)](#core-rubric-dimensions-15)
 - [Mapping subscores to an overall score](#mapping-subscores-to-an-overall-score)
 - [Venue overall scales](#venue-overall-scales)
 - [Confidence / expertise](#confidence--expertise)
@@ -113,7 +113,8 @@ venue's actual form.
 ### `chi-5` — CHI A/ARR/RR/RRX/X (verified for CHI 2026; re-verify each year)
 
 5 = A (Accept) · 4 = ARR (accept, required minor revisions) ·
-3 = RR (Revise & Resubmit, 5-week cycle) · 2 = RRX (R&R unlikely to
+3 = RR (Revise & Resubmit, ~4–5-week window — CHI 2026's was ~4 weeks;
+check the year's dates) · 2 = RRX (R&R unlikely to
 succeed) · 1 = X (Reject). Threshold 3.5: RR is genuinely borderline — up
 to ~half of R&R papers are rejected in round 2.
 

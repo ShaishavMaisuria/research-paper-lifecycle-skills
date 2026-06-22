@@ -86,15 +86,35 @@ retrieved paper to a required cluster and run the gate deterministically:
 python3 scripts/check_coverage.py plan.json    # or the text form; see --help
 ```
 
-The plan lists one block per required cluster with the verified cite keys
-assigned to it. The script applies two thresholds:
+The plan lists one block per required cluster with the cite keys assigned to
+it. **Tag each key by evidence tier** so precision stays visible and the floor
+cannot be met by padding: an untagged key means "the paper is known to cite
+this" (confirmed); append `!graph`, `!keyword`, or `!heuristic` to a key the
+paper is *not confirmed* to cite (surfaced by a citation-graph edge, a keyword
+hit, or a "a strong paper would cite this" hunch — descending confidence).
+The script applies three thresholds:
 
-- **Citation floor (per cluster, default 2):** a cluster below the floor
-  WARNs. A cluster resting on a single citation is a reviewer target — one
-  paper cannot characterize a "line of work."
-- **Zero-citation FAIL:** a required cluster with no citations is a blocking
-  structural hole. The script exits 3 and emits a *second-pass retrieval
-  worklist*.
+- **Confirmed-citation floor (per cluster, default 2):** a cluster with fewer
+  than the floor of *confirmed* cites WARNs. A cluster resting on a single
+  confirmed citation is a reviewer target — one paper cannot characterize a
+  "line of work." Speculative-tier keys do NOT count toward the floor.
+- **Zero-confirmed FAIL:** a required cluster with no confirmed citations is a
+  blocking structural hole — *including* one "covered" only by speculative
+  refs, because padding a thin cluster with plausible-but-uncited works masks
+  the hole rather than filling it. The script exits 3 and emits a *second-pass
+  retrieval worklist*.
+- **Precision estimate + heuristic cap:** the report prints confirmed/total
+  across the plan (a precision proxy) and caps heuristic-only additions
+  (default 2, `--heuristic-cap`) so the core set stays scope-justified rather
+  than hunch-inflated. Adjacent and foundational clusters should be ranked by
+  load-bearing necessity and trimmed to the floor plus the few most-cited
+  canonical members; defer the rest to an optional pool (`expected: false`)
+  rather than committing every topical neighbor.
+
+When the ground truth you are evaluated against is a *known subset* of the
+paper's real bibliography, report recall against that subset separately from
+this precision band — a speculative extra is a hypothesis, not a confirmed hit,
+and must be labeled so the user can prune it before submission.
 
 Routing the gap (the part that matters):
 

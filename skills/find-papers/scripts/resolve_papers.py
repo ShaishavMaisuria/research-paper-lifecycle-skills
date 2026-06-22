@@ -352,6 +352,19 @@ def resolve(records: list, consulted: list) -> list:
     for rec in merged.values():
         if has_verifiable_id(rec):
             rec["resolution"] = "resolved"
+            # Auditability: a resolved record that only ONE index returned is
+            # confirmed by a single provider. If that provider was a fallback
+            # for a leg whose primary was rate-limited, this record's recall
+            # rested on the fallback path — flag it so the gap is visible
+            # rather than silently absorbed into a "complete" set.
+            if len(rec.get("providers") or []) < 2:
+                rec["single_provider"] = True
+                rec["provenance_note"] = (
+                    "confirmed by a single index ("
+                    + ", ".join(rec["providers"])
+                    + "); if a primary index was rate-limited this leg, recall "
+                    "for this title rests on the fallback path — re-confirm on "
+                    "a second index before treating coverage as complete.")
         else:
             # title-only: keep it, flagged, and tell the agent how to confirm
             rec["resolution"] = "unresolved-keep"
@@ -474,6 +487,8 @@ def main():
         flag = ""
         if r["resolution"] == "unresolved-keep":
             flag = "  [unresolved-keep]"
+        if r.get("single_provider"):
+            flag += "  [single-provider — re-confirm on a 2nd index]"
         if r["is_preprint"]:
             flag += "  [preprint — confirm acceptance via DBLP/Crossref]"
         print(f"{i}. {r['title']} — {authors} ({r['year']}){flag}")
@@ -490,6 +505,18 @@ def main():
         print(f"   {meta}")
         if r.get("resolution_note"):
             print(f"   note: {r['resolution_note']}")
+        elif r.get("provenance_note"):
+            print(f"   note: {r['provenance_note']}")
+    # When the run is degraded, count how many results lean on a single index
+    # so the recall-rests-on-luck risk is quantified, not just narrated.
+    if report["coverage"] == "PARTIAL":
+        n_single = sum(1 for r in records if r.get("single_provider"))
+        if n_single:
+            print(f"\n! {n_single} of {len(records)} result(s) are confirmed by "
+                  "only ONE index on a PARTIAL run — their recall may rest on a "
+                  "fallback path. Re-confirm them on a second index (retry the "
+                  "rate-limited leg, or add S2_API_KEY) before claiming "
+                  "complete coverage.")
     if any("s2" in r["providers"] for r in records):
         print("\ndata includes Semantic Scholar (ODC-BY; attribute S2).")
 
