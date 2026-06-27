@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Research Paper Lifecycle Skills">
+  <rect width="64" height="64" rx="12" fill="#121623"/>
+  <path d="M16 17h32v30H16z" fill="#ffffff" opacity="0.12"/>
+  <path d="M21 24h22M21 31h16M21 38h12" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M44 45l6 6" stroke="#9dd6f9" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="39" cy="40" r="8" fill="none" stroke="#9dd6f9" stroke-width="4"/>
+</svg>

@@ -7,6 +7,7 @@
   <meta name="description" content="42 reusable AI agent skills for literature review, academic writing, citation verification, conference submission, peer review rebuttal, publication, posters, and research presentations.">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <meta property="og:title" content="Research Paper Lifecycle Skills">
   <meta property="og:description" content="42 reusable AI agent skills for the complete academic research-paper lifecycle.">
   <meta property="og:type" content="website">
@@ -18,56 +19,97 @@
   <style>
     :root {
       color-scheme: light;
-      --ink: #12131f;
-      --muted: #5b6178;
-      --line: #dfe4ef;
-      --soft: #f7f8fc;
-      --accent: #4f46e5;
-      --accent-2: #0ea5e9;
-      --green: #0f9f75;
+      --ink: #121623;
+      --muted: #5c6477;
+      --quiet: #727b90;
+      --line: #dce3ee;
+      --soft: #f6f8fc;
+      --paper: #fbfcff;
       --panel: #ffffff;
+      --blue: #2754d8;
+      --blue-soft: #edf2ff;
+      --teal: #087f73;
+      --teal-soft: #e9f7f4;
+      --plum: #673ab7;
+      --plum-soft: #f2ecff;
+      --amber: #a15c00;
+      --amber-soft: #fff4df;
+      --rose: #b4234c;
+      --rose-soft: #fff0f4;
+      --green: #12745c;
+      --green-soft: #ebf8f2;
+      --shadow: 0 18px 50px rgba(30, 41, 59, 0.10);
     }
 
     * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       margin: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--ink);
-      background: #fbfcff;
+      background: var(--paper);
       line-height: 1.5;
+      letter-spacing: 0;
     }
 
-    a { color: inherit; }
+    a {
+      color: inherit;
+      text-decoration-color: rgba(39, 84, 216, 0.32);
+      text-underline-offset: 3px;
+    }
 
-    .hero {
-      min-height: 86vh;
-      display: grid;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-      background:
-        linear-gradient(90deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 48%, rgba(255, 255, 255, 0.55) 100%),
-        url("assets/hero.svg") right 8% center / min(780px, 58vw) auto no-repeat,
-        #f7f8fc;
-      border-bottom: 1px solid var(--line);
+    button,
+    input {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(39, 84, 216, 0.35);
+      outline-offset: 3px;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 100;
+      transform: translateY(-160%);
+      background: var(--ink);
+      color: #fff;
+      border-radius: 6px;
+      padding: 8px 12px;
+      text-decoration: none;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
     }
 
     .wrap {
-      width: min(1120px, calc(100% - 40px));
+      width: min(1160px, calc(100% - 40px));
       margin: 0 auto;
     }
 
-    nav {
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 72px;
-      display: flex;
-      align-items: center;
-      z-index: 2;
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(220, 227, 238, 0.88);
+      background: rgba(251, 252, 255, 0.93);
+      backdrop-filter: blur(16px);
     }
 
     .nav-inner {
+      min-height: 72px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -75,76 +117,121 @@
     }
 
     .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      color: var(--ink);
+      text-decoration: none;
       font-weight: 800;
-      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      color: #fff;
+      background: #121623;
+      font-size: 13px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .brand-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .nav-links {
       display: flex;
-      gap: 18px;
       align-items: center;
-      font-size: 14px;
+      gap: 18px;
       color: var(--muted);
+      font-size: 14px;
+      font-weight: 650;
     }
 
-    .nav-links a { text-decoration: none; }
+    .nav-links a {
+      text-decoration: none;
+    }
 
-    .button {
+    .nav-links a:hover {
+      color: var(--ink);
+    }
+
+    .nav-cta {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 44px;
-      padding: 0 18px;
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
       border-radius: 7px;
-      background: var(--ink);
-      color: #fff;
-      text-decoration: none;
-      font-weight: 750;
-      border: 1px solid var(--ink);
-    }
-
-    .button.secondary {
       background: #fff;
       color: var(--ink);
-      border-color: var(--line);
+      box-shadow: 0 8px 24px rgba(30, 41, 59, 0.06);
+    }
+
+    .hero {
+      min-height: 82vh;
+      display: block;
+      position: relative;
+      overflow: hidden;
+      padding: 0;
+      background:
+        linear-gradient(90deg, rgba(251, 252, 255, 0.99) 0%, rgba(251, 252, 255, 0.98) 56%, rgba(251, 252, 255, 0.83) 74%, rgba(251, 252, 255, 0.56) 100%),
+        url("assets/hero.svg") right 4% center / min(700px, 52vw) auto no-repeat,
+        #eef4fb;
+      border-bottom: 1px solid var(--line);
     }
 
     .hero-copy {
-      max-width: 650px;
-      padding: 120px 0 86px;
+      max-width: 680px;
+      padding: 50px 0 36px;
     }
 
     .eyebrow {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 20px;
-      color: #312e81;
-      font-size: 13px;
+      margin: 0 0 18px;
+      color: #2c3f92;
+      font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
     }
 
     .eyebrow span {
-      border: 1px solid #d8d4f5;
-      background: #f3f1ff;
+      border: 1px solid #d6def5;
+      background: rgba(255, 255, 255, 0.82);
       border-radius: 999px;
       padding: 6px 10px;
+      box-shadow: 0 8px 24px rgba(30, 41, 59, 0.06);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
     }
 
     h1 {
-      margin: 0;
+      margin-bottom: 0;
       max-width: 780px;
-      font-size: clamp(44px, 7vw, 84px);
-      line-height: 0.96;
+      font-size: 64px;
+      line-height: 0.97;
       letter-spacing: 0;
     }
 
     .lead {
       margin: 22px 0 0;
-      max-width: 620px;
-      font-size: clamp(18px, 2vw, 22px);
+      max-width: 640px;
       color: var(--muted);
+      font-size: 20px;
     }
 
     .actions {
@@ -154,67 +241,258 @@
       gap: 12px;
     }
 
-    .install {
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 7px;
+      background: var(--ink);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 780;
+      border: 1px solid var(--ink);
+      box-shadow: 0 14px 34px rgba(18, 22, 35, 0.18);
+    }
+
+    .button.secondary {
+      background: #fff;
+      color: var(--ink);
+      border-color: var(--line);
+      box-shadow: 0 10px 24px rgba(30, 41, 59, 0.08);
+    }
+
+    .install-panel {
       margin-top: 28px;
-      width: min(100%, 720px);
-      border: 1px solid #cfd6e6;
+      width: min(100%, 760px);
+      border: 1px solid #cbd5e1;
       background: #101827;
       color: #e7edf8;
       border-radius: 8px;
-      padding: 16px 18px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .install-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+      color: #b8c3d7;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .copy-button {
+      min-height: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .install-command {
+      margin: 0;
+      padding: 18px;
       overflow-x: auto;
-      font: 15px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font: 15px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
 
     section {
-      padding: 72px 0;
+      padding: 78px 0;
+    }
+
+    .hero + section {
+      padding-top: 20px;
     }
 
     .section-head {
       display: grid;
-      grid-template-columns: minmax(0, 0.9fr) minmax(260px, 0.55fr);
-      gap: 40px;
+      grid-template-columns: minmax(0, 0.95fr) minmax(260px, 0.52fr);
+      gap: 44px;
       align-items: end;
-      margin-bottom: 28px;
+      margin-bottom: 30px;
     }
 
     h2 {
-      margin: 0;
-      font-size: clamp(28px, 3vw, 42px);
+      margin-bottom: 0;
+      font-size: 42px;
       line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 10px;
+      font-size: 21px;
+      line-height: 1.2;
       letter-spacing: 0;
     }
 
     .section-head p,
     .muted {
-      margin: 0;
+      margin-bottom: 0;
       color: var(--muted);
     }
 
-    .grid {
+    .path-grid,
+    .proof-grid,
+    .integration-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 14px;
     }
 
-    .tile {
+    .path-card,
+    .proof-card,
+    .integration-card,
+    .workflow-card,
+    .skill-card {
       border: 1px solid var(--line);
       background: var(--panel);
       border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(30, 41, 59, 0.05);
+    }
+
+    .path-card {
       padding: 20px;
-      min-height: 156px;
+      min-height: 190px;
     }
 
-    .tile strong {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 17px;
-    }
-
-    .tile p {
-      margin: 0;
+    .path-card p,
+    .proof-card p,
+    .integration-card p {
+      margin-bottom: 0;
       color: var(--muted);
       font-size: 15px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      margin-bottom: 14px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tag.start { color: var(--plum); background: var(--plum-soft); }
+    .tag.discover { color: var(--blue); background: var(--blue-soft); }
+    .tag.write { color: var(--teal); background: var(--teal-soft); }
+    .tag.verify { color: var(--rose); background: var(--rose-soft); }
+    .tag.submit { color: var(--amber); background: var(--amber-soft); }
+    .tag.respond { color: #6f3a00; background: #fff2db; }
+    .tag.publish { color: var(--green); background: var(--green-soft); }
+
+    .band {
+      background: #f3f7fb;
+      border-block: 1px solid var(--line);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.6fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .search-box {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .search-box input {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 14px;
+      box-shadow: 0 8px 24px rgba(30, 41, 59, 0.05);
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      padding-top: 24px;
+    }
+
+    .filter {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .filter.active {
+      border-color: #121623;
+      background: #121623;
+      color: #fff;
+    }
+
+    .skill-count {
+      margin: 0 0 16px;
+      color: var(--quiet);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .skill-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 178px;
+      padding: 18px;
+      color: inherit;
+      text-decoration: none;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .skill-card:hover {
+      transform: translateY(-2px);
+      border-color: #bac6d9;
+      box-shadow: 0 16px 38px rgba(30, 41, 59, 0.10);
+    }
+
+    .skill-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .skill-card span:last-child {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .skill-card[hidden] {
+      display: none;
     }
 
     .lifecycle {
@@ -223,46 +501,73 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
+      box-shadow: var(--shadow);
     }
 
-    .band {
-      background: #f4f7fb;
-      border-block: 1px solid var(--line);
-    }
-
-    .workflow {
+    .workflow-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
     }
 
-    .workflow code {
-      display: block;
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-      color: #283044;
-      overflow-x: auto;
-      font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    .workflow-card {
+      padding: 18px;
     }
 
-    .proof {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 18px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
+    .workflow-card strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .workflow-card code,
+    .integration-card code {
+      display: block;
+      width: 100%;
+      color: #283044;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .integration-card {
+      padding: 18px;
+    }
+
+    .integration-card h3 {
+      font-size: 18px;
+    }
+
+    .proof-card {
       padding: 22px;
     }
 
-    .proof strong {
+    .proof-card strong {
       display: block;
       color: var(--green);
-      font-size: 28px;
+      font-size: 32px;
       line-height: 1;
-      margin-bottom: 8px;
+      margin-bottom: 9px;
+    }
+
+    .final-cta {
+      padding: 64px 0;
+      background: #121623;
+      color: #fff;
+    }
+
+    .final-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) auto;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .final-inner p {
+      max-width: 680px;
+      margin-bottom: 0;
+      color: #c5cfdf;
     }
 
     footer {
@@ -273,24 +578,125 @@
       font-size: 14px;
     }
 
-    @media (max-width: 840px) {
+    @media (max-width: 980px) {
+      h1 { font-size: 58px; }
+      h2 { font-size: 36px; }
+
       .hero {
         background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.91) 64%, rgba(255, 255, 255, 0.78) 100%),
-          url("assets/hero.svg") center bottom 24px / 780px auto no-repeat,
-          #f7f8fc;
+          linear-gradient(180deg, rgba(251, 252, 255, 0.99) 0%, rgba(251, 252, 255, 0.93) 62%, rgba(251, 252, 255, 0.78) 100%),
+          url("assets/hero.svg") center bottom 26px / 760px auto no-repeat,
+          #eef4fb;
         min-height: 92vh;
       }
 
-      nav { height: auto; padding: 18px 0; }
-      .nav-inner { align-items: flex-start; }
-      .nav-links { display: none; }
-      .hero-copy { padding: 100px 0 260px; }
+      .hero-copy {
+        padding: 76px 0 290px;
+      }
+
       .section-head,
-      .grid,
-      .workflow,
-      .proof {
+      .toolbar,
+      .final-inner {
         grid-template-columns: 1fr;
+      }
+
+      .filters {
+        justify-content: flex-start;
+        padding-top: 0;
+      }
+
+      .path-grid,
+      .proof-grid,
+      .integration-grid,
+      .skill-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .wrap {
+        width: min(100% - 28px, 1160px);
+      }
+
+      .nav-inner {
+        min-height: 64px;
+      }
+
+      .brand-text {
+        max-width: 210px;
+      }
+
+      .nav-links a:not(.nav-cta) {
+        display: none;
+      }
+
+      .hero {
+        min-height: 0;
+        background:
+          linear-gradient(180deg, rgba(251, 252, 255, 0.99) 0%, rgba(251, 252, 255, 0.95) 65%, rgba(251, 252, 255, 0.82) 100%),
+          url("assets/hero.svg") center bottom 18px / 540px auto no-repeat,
+          #eef4fb;
+      }
+
+      .hero-copy {
+        padding: 36px 0 24px;
+      }
+
+      h1 {
+        font-size: 40px;
+        line-height: 1.02;
+      }
+
+      h2 {
+        font-size: 31px;
+      }
+
+      .lead {
+        font-size: 18px;
+        margin-top: 18px;
+      }
+
+      .actions {
+        margin-top: 24px;
+      }
+
+      .install-panel {
+        margin-top: 22px;
+      }
+
+      .button,
+      .actions {
+        width: 100%;
+      }
+
+      .button {
+        justify-content: center;
+      }
+
+      .path-grid,
+      .proof-grid,
+      .integration-grid,
+      .workflow-grid,
+      .skill-grid {
+        grid-template-columns: 1fr;
+      }
+
+      section {
+        padding: 56px 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      .skill-card {
+        transition: none;
+      }
+
+      .skill-card:hover {
+        transform: none;
       }
     }
   </style>
@@ -311,88 +717,234 @@
   </script>
 </head>
 <body>
-  <main>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <nav class="site-nav" aria-label="Primary">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" aria-label="Research Paper Lifecycle Skills home">
+        <span class="brand-mark">RPL</span>
+        <span class="brand-text">research-paper-lifecycle-skills</span>
+      </a>
+      <div class="nav-links">
+        <a href="#skills">Skills</a>
+        <a href="#workflows">Workflows</a>
+        <a href="#integrations">Integrations</a>
+        <a class="nav-cta" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
     <section class="hero" id="top">
-      <nav aria-label="Primary">
-        <div class="wrap nav-inner">
-          <a class="brand" href="#top">research-paper-lifecycle-skills</a>
-          <div class="nav-links">
-            <a href="#skills">Skills</a>
-            <a href="#workflows">Workflows</a>
-            <a href="#install">Install</a>
-            <a href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">GitHub</a>
-          </div>
-        </div>
-      </nav>
       <div class="wrap hero-copy">
-        <div class="eyebrow">
+        <div class="eyebrow" aria-label="Project facts">
           <span>42 skills</span>
           <span>Apache-2.0</span>
-          <span>agentskills.io</span>
+          <span>Agent Skills package</span>
         </div>
-        <h1>AI agent skills for the full research-paper lifecycle.</h1>
-        <p class="lead">Discover literature, verify citations, write and polish academic drafts, check venue rules, prepare submissions, respond to reviews, publish camera-ready files, and present the work.</p>
+        <h1>Research Paper Lifecycle Skills</h1>
+        <p class="lead">A public package of AI agent skills for literature discovery, academic writing, citation verification, venue checks, submissions, rebuttals, camera-ready work, artifacts, slides, posters, and research Q&A.</p>
         <div class="actions">
           <a class="button" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">Open on GitHub</a>
-          <a class="button secondary" href="#install">Install skills</a>
+          <a class="button secondary" href="#skills">Browse skills</a>
         </div>
-        <pre class="install" id="install">npx skills add ShaishavMaisuria/research-paper-lifecycle-skills</pre>
-      </div>
-    </section>
-
-    <section id="skills">
-      <div class="wrap">
-        <div class="section-head">
-          <h2>Built for the work around the paper.</h2>
-          <p>Each folder is a portable Agent Skills task with trigger rules, guardrails, references, and deterministic helpers where repeatability matters.</p>
-        </div>
-        <div class="grid">
-          <div class="tile"><strong>Discover</strong><p>Find papers, fetch legal open-access copies, study exemplars, and build grounded literature reviews.</p></div>
-          <div class="tile"><strong>Write</strong><p>Draft abstracts, related work, surveys, prose edits, structure repairs, and figure/table polish.</p></div>
-          <div class="tile"><strong>Verify</strong><p>Catch fabricated citations, unsupported claims, originality risks, and reproducibility gaps.</p></div>
-          <div class="tile"><strong>Submit</strong><p>Parse CFPs, tailor drafts to venues, anonymize, check page limits, and simulate reviewers.</p></div>
-          <div class="tile"><strong>Respond</strong><p>Triage reviews and draft author responses for rebuttal, revision, and journal workflows.</p></div>
-          <div class="tile"><strong>Publish and present</strong><p>Prepare camera-ready packages, artifacts, slides, talk scripts, Q&A practice, and posters.</p></div>
+        <div class="install-panel" id="install">
+          <div class="install-top">
+            <span>Install all skills</span>
+            <button class="copy-button" type="button" data-copy="npx skills add ShaishavMaisuria/research-paper-lifecycle-skills">Copy</button>
+          </div>
+          <pre class="install-command">npx skills add ShaishavMaisuria/research-paper-lifecycle-skills</pre>
         </div>
       </div>
     </section>
 
-    <section class="band">
+    <section aria-labelledby="choose-heading">
       <div class="wrap">
         <div class="section-head">
-          <h2>One lifecycle map, many specialist skills.</h2>
-          <p>Use one skill directly or let an agent orchestrate the sequence with checkpoints and live source verification.</p>
+          <h2 id="choose-heading">Choose the next research move.</h2>
+          <p>Start broad with an orchestrated lifecycle, or jump straight into the exact task that is slowing the paper down.</p>
+        </div>
+        <div class="path-grid">
+          <article class="path-card">
+            <span class="tag start">Start</span>
+            <h3>Turn an idea into a staged plan.</h3>
+            <p>Use paper-profile and orchestrate-paper to set context, sequence the work, and keep checkpoints visible.</p>
+          </article>
+          <article class="path-card">
+            <span class="tag verify">Check</span>
+            <h3>Find risks before reviewers do.</h3>
+            <p>Verify citations, scan originality, audit claims, run mock reviews, and produce one paper-health report.</p>
+          </article>
+          <article class="path-card">
+            <span class="tag submit">Submit</span>
+            <h3>Match the live venue rules.</h3>
+            <p>Parse CFPs, adapt the draft, anonymize, plan deadlines, and lint desk-reject risks against current guidance.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="skills" aria-labelledby="skills-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="skills-heading">Find the right skill fast.</h2>
+          <p>Search by task, stage, or skill name. Every item opens the public `SKILL.md` so users can inspect triggers, guardrails, references, and helper scripts before installing.</p>
+        </div>
+
+        <div class="toolbar">
+          <label class="search-box" for="skill-search">
+            Find a skill
+            <input id="skill-search" type="search" placeholder="Try citation, rebuttal, Overleaf, poster..." autocomplete="off">
+          </label>
+          <div class="filters" aria-label="Filter skills by lifecycle stage">
+            <button class="filter active" type="button" data-filter="all">All</button>
+            <button class="filter" type="button" data-filter="start">Start</button>
+            <button class="filter" type="button" data-filter="discover">Discover</button>
+            <button class="filter" type="button" data-filter="write">Write</button>
+            <button class="filter" type="button" data-filter="verify">Verify</button>
+            <button class="filter" type="button" data-filter="submit">Submit</button>
+            <button class="filter" type="button" data-filter="respond">Respond</button>
+            <button class="filter" type="button" data-filter="publish">Publish</button>
+          </div>
+        </div>
+        <p class="skill-count" id="skill-count" aria-live="polite">Showing 42 skills</p>
+
+        <div class="skill-grid" id="skill-grid">
+          <a class="skill-card" data-stage="start" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/orchestrate-paper/SKILL.md"><span class="tag start">Start</span><strong>orchestrate-paper</strong><span>Run the whole paper lifecycle with checkpoints, verification, and stage handoffs.</span></a>
+          <a class="skill-card" data-stage="start" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/assess-paper/SKILL.md"><span class="tag start">Start</span><strong>assess-paper</strong><span>Produce one paper-health report across compliance, integrity, citations, and reviewer risk.</span></a>
+          <a class="skill-card" data-stage="start" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/paper-profile/SKILL.md"><span class="tag start">Start</span><strong>paper-profile</strong><span>Capture positioning, contribution type, preferences, and constraints for downstream skills.</span></a>
+          <a class="skill-card" data-stage="start" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/reflect-paper/SKILL.md"><span class="tag start">Start</span><strong>reflect-paper</strong><span>Run paired Researcher and Writer passes over a draft and merge their revision plan.</span></a>
+          <a class="skill-card" data-stage="start" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/reflect-and-improve/SKILL.md"><span class="tag start">Start</span><strong>reflect-and-improve</strong><span>Check whether a generated change actually improved the draft against the stated goal.</span></a>
+          <a class="skill-card" data-stage="start" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/render-workspace-html/SKILL.md"><span class="tag start">Start</span><strong>render-workspace-html</strong><span>Create a local browser dashboard of outputs, progress, and recent activity.</span></a>
+
+          <a class="skill-card" data-stage="discover" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/find-papers/SKILL.md"><span class="tag discover">Discover</span><strong>find-papers</strong><span>Search scholarly metadata, proceedings, DOI records, arXiv, and venue aliases without API keys.</span></a>
+          <a class="skill-card" data-stage="discover" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/fetch-paper/SKILL.md"><span class="tag discover">Discover</span><strong>fetch-paper</strong><span>Fetch legal open-access copies from identifiers without bypassing paywalls.</span></a>
+          <a class="skill-card" data-stage="discover" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/study-exemplars/SKILL.md"><span class="tag discover">Discover</span><strong>study-exemplars</strong><span>Study strong target-venue papers and produce original style and structure briefs.</span></a>
+          <a class="skill-card" data-stage="discover" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/literature-review/SKILL.md"><span class="tag discover">Discover</span><strong>literature-review</strong><span>Build a structured review where every claim is grounded in verified references.</span></a>
+
+          <a class="skill-card" data-stage="write" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/draft-survey/SKILL.md"><span class="tag write">Write</span><strong>draft-survey</strong><span>Create a ranked reading list and original two-column survey draft from verified citations.</span></a>
+          <a class="skill-card" data-stage="write" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/write-abstract/SKILL.md"><span class="tag write">Write</span><strong>write-abstract</strong><span>Draft, shorten, lengthen, or lint venue-aware abstracts and keyword blocks.</span></a>
+          <a class="skill-card" data-stage="write" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/draft-related-work/SKILL.md"><span class="tag write">Write</span><strong>draft-related-work</strong><span>Position related work against retrieved papers and never invent references.</span></a>
+          <a class="skill-card" data-stage="write" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/polish-prose/SKILL.md"><span class="tag write">Write</span><strong>polish-prose</strong><span>Tighten academic prose and remove AI-tell phrasing without changing claims.</span></a>
+          <a class="skill-card" data-stage="write" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/match-style/SKILL.md"><span class="tag write">Write</span><strong>match-style</strong><span>Align the draft with the author's own voice or the target venue register.</span></a>
+          <a class="skill-card" data-stage="write" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/polish-tables-figures/SKILL.md"><span class="tag write">Write</span><strong>polish-tables-figures</strong><span>Improve LaTeX tables, figures, captions, crossrefs, palettes, and layout.</span></a>
+          <a class="skill-card" data-stage="write" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/refactor-structure/SKILL.md"><span class="tag write">Write</span><strong>refactor-structure</strong><span>Repair argument architecture, section order, narrative flow, and contribution alignment.</span></a>
+          <a class="skill-card" data-stage="write" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/fit-page-limit/SKILL.md"><span class="tag write">Write</span><strong>fit-page-limit</strong><span>Compress or expand a draft while protecting core evidence and citations.</span></a>
+          <a class="skill-card" data-stage="write" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/work-with-overleaf/SKILL.md"><span class="tag write">Write</span><strong>work-with-overleaf</strong><span>Bring Overleaf projects into a local workflow and guide safe sync back.</span></a>
+
+          <a class="skill-card" data-stage="verify" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/verify-citations/SKILL.md"><span class="tag verify">Verify</span><strong>verify-citations</strong><span>Check BibTeX entries for fabricated, mismatched, duplicate, or retracted records.</span></a>
+          <a class="skill-card" data-stage="verify" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/check-originality/SKILL.md"><span class="tag verify">Verify</span><strong>check-originality</strong><span>Detect plagiarism, self-plagiarism, internal duplication, and over-close paraphrases.</span></a>
+          <a class="skill-card" data-stage="verify" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/verify-claims/SKILL.md"><span class="tag verify">Verify</span><strong>verify-claims</strong><span>Audit load-bearing claims against evidence, results, figures, tables, and citations.</span></a>
+
+          <a class="skill-card" data-stage="submit" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/parse-cfp/SKILL.md"><span class="tag submit">Submit</span><strong>parse-cfp</strong><span>Turn a live CFP into a machine-checkable venue requirements card.</span></a>
+          <a class="skill-card" data-stage="submit" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/add-venue-profile/SKILL.md"><span class="tag submit">Submit</span><strong>add-venue-profile</strong><span>Create or refresh a public venue profile from verified live sources.</span></a>
+          <a class="skill-card" data-stage="submit" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/select-venue/SKILL.md"><span class="tag submit">Submit</span><strong>select-venue</strong><span>Build a ranked venue and track shortlist using fit, prestige signals, and deadlines.</span></a>
+          <a class="skill-card" data-stage="submit" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/tailor-to-venue/SKILL.md"><span class="tag submit">Submit</span><strong>tailor-to-venue</strong><span>Adapt a draft to a venue, track, template, page limit, and blind-review policy.</span></a>
+          <a class="skill-card" data-stage="submit" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/preflight-check/SKILL.md"><span class="tag submit">Submit</span><strong>preflight-check</strong><span>Catch desk-reject risks in LaTeX submissions before the paper leaves the machine.</span></a>
+          <a class="skill-card" data-stage="submit" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/anonymize-paper/SKILL.md"><span class="tag submit">Submit</span><strong>anonymize-paper</strong><span>Sweep LaTeX, PDFs, repos, comments, links, and metadata for identity leaks.</span></a>
+          <a class="skill-card" data-stage="submit" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/plan-submission/SKILL.md"><span class="tag submit">Submit</span><strong>plan-submission</strong><span>Build a deadline-aware submission timeline with account, abstract, and COI tasks.</span></a>
+          <a class="skill-card" data-stage="submit" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/simulate-reviewers/SKILL.md"><span class="tag submit">Submit</span><strong>simulate-reviewers</strong><span>Run a venue-calibrated mock review panel and prioritize the fix list.</span></a>
+          <a class="skill-card" data-stage="submit" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/benchmark-paper/SKILL.md"><span class="tag submit">Submit</span><strong>benchmark-paper</strong><span>Compare draft shape against award-winning and top-cited venue exemplars.</span></a>
+
+          <a class="skill-card" data-stage="respond" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/triage-reviews/SKILL.md"><span class="tag respond">Respond</span><strong>triage-reviews</strong><span>Turn raw reviews into a severity, effort, and response-strategy matrix.</span></a>
+          <a class="skill-card" data-stage="respond" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/write-rebuttal/SKILL.md"><span class="tag respond">Respond</span><strong>write-rebuttal</strong><span>Draft rebuttals and response letters for one-page, threaded, or journal formats.</span></a>
+
+          <a class="skill-card" data-stage="publish" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/prepare-camera-ready/SKILL.md"><span class="tag publish">Publish</span><strong>prepare-camera-ready</strong><span>Walk accepted papers through final-file, rights, PDF, and publication rails.</span></a>
+          <a class="skill-card" data-stage="publish" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/test-research-code/SKILL.md"><span class="tag publish">Artifacts</span><strong>test-research-code</strong><span>Make research code runnable and repeatable for artifact review.</span></a>
+          <a class="skill-card" data-stage="publish" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/verify-results/SKILL.md"><span class="tag publish">Artifacts</span><strong>verify-results</strong><span>Compare reported paper metrics with local code outputs and logs.</span></a>
+          <a class="skill-card" data-stage="publish" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/refactor-research-code/SKILL.md"><span class="tag publish">Artifacts</span><strong>refactor-research-code</strong><span>Clean research code for public release while preserving reported behavior.</span></a>
+          <a class="skill-card" data-stage="publish" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/prepare-artifacts/SKILL.md"><span class="tag publish">Artifacts</span><strong>prepare-artifacts</strong><span>Package code and data for reproducibility review, badges, and archival DOI workflows.</span></a>
+          <a class="skill-card" data-stage="publish" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/make-slides/SKILL.md"><span class="tag publish">Present</span><strong>make-slides</strong><span>Turn a paper into a conference talk deck with pacing and figure checks.</span></a>
+          <a class="skill-card" data-stage="publish" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/write-talk-script/SKILL.md"><span class="tag publish">Present</span><strong>write-talk-script</strong><span>Write timed speaker notes with per-slide budgets, transitions, and cut lists.</span></a>
+          <a class="skill-card" data-stage="publish" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/rehearse-qa/SKILL.md"><span class="tag publish">Present</span><strong>rehearse-qa</strong><span>Practice hostile and curious Q&A with calibrated audience personas.</span></a>
+          <a class="skill-card" data-stage="publish" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/skills/make-poster/SKILL.md"><span class="tag publish">Present</span><strong>make-poster</strong><span>Create and check research posters, poster-session pitches, and print-day details.</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="lifecycle-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="lifecycle-heading">One lifecycle map, many specialist skills.</h2>
+          <p>The package is designed for handoffs: discover, write, verify, submit, respond, publish, and present. Use one skill directly or let an agent orchestrate the sequence.</p>
         </div>
         <img class="lifecycle" src="assets/lifecycle.svg" alt="Lifecycle map showing discover, write, verify, submit, rebut, publish, and present skills">
       </div>
     </section>
 
-    <section id="workflows">
+    <section class="band" id="workflows" aria-labelledby="workflows-heading">
       <div class="wrap">
         <div class="section-head">
-          <h2>Common research workflows.</h2>
-          <p>Plain-language requests trigger the right skill and keep the author in control.</p>
+          <h2 id="workflows-heading">Common workflows.</h2>
+          <p>These are the high-signal paths users can copy into an agent or follow step by step.</p>
         </div>
-        <div class="workflow">
-          <code>New paper:
-paper-profile -> literature-review -> write-abstract -> draft-related-work -> polish-prose</code>
-          <code>Before submit:
-parse-cfp -> tailor-to-venue -> anonymize-paper -> preflight-check</code>
-          <code>Survey draft:
-find-papers -> draft-survey -> verify-citations -> polish-prose</code>
-          <code>Accepted:
-prepare-camera-ready -> make-slides -> write-talk-script -> rehearse-qa -> make-poster</code>
+        <div class="workflow-grid">
+          <article class="workflow-card">
+            <strong>New paper</strong>
+            <code>paper-profile -> literature-review -> write-abstract -> draft-related-work -> polish-prose</code>
+          </article>
+          <article class="workflow-card">
+            <strong>Before submission</strong>
+            <code>parse-cfp -> tailor-to-venue -> anonymize-paper -> preflight-check</code>
+          </article>
+          <article class="workflow-card">
+            <strong>Quality pass</strong>
+            <code>verify-citations -> check-originality -> benchmark-paper -> simulate-reviewers -> assess-paper</code>
+          </article>
+          <article class="workflow-card">
+            <strong>Accepted paper</strong>
+            <code>prepare-camera-ready -> make-slides -> write-talk-script -> rehearse-qa -> make-poster</code>
+          </article>
         </div>
       </div>
     </section>
 
-    <section>
+    <section id="integrations" aria-labelledby="integrations-heading">
       <div class="wrap">
-        <div class="proof">
-          <div><strong>42</strong><span class="muted">agent skills linked from the README and installable through the Agent Skills CLI.</span></div>
-          <div><strong>0</strong><span class="muted">bundled papers or copyrighted corpora. Paper content is fetched only when legal and needed.</span></div>
-          <div><strong>5</strong><span class="muted">scholarly metadata sources used by search and citation workflows without required API keys.</span></div>
+        <div class="section-head">
+          <h2 id="integrations-heading">Install into the agent you use.</h2>
+          <p>The package is not locked to one AI tool. It uses the Agent Skills structure so compatible agents can install all skills or a selected skill.</p>
         </div>
+        <div class="integration-grid">
+          <article class="integration-card">
+            <h3>All compatible agents</h3>
+            <code>npx skills add ShaishavMaisuria/research-paper-lifecycle-skills</code>
+          </article>
+          <article class="integration-card">
+            <h3>Install one skill</h3>
+            <code>npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --skill preflight-check</code>
+          </article>
+          <article class="integration-card">
+            <h3>Agent targets</h3>
+            <code>npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent codex
+npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent cursor
+npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent gemini</code>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" aria-labelledby="proof-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="proof-heading">Release-safe by design.</h2>
+          <p>The public package ships instructions, guardrails, links, and helper scripts. It does not bundle private research material or copyrighted paper corpora.</p>
+        </div>
+        <div class="proof-grid">
+          <article class="proof-card"><strong>42</strong><p>Skills linked from the README and installable through the Agent Skills CLI.</p></article>
+          <article class="proof-card"><strong>0</strong><p>Bundled papers, copied abstracts, private reviews, generated caches, or benchmark fixtures.</p></article>
+          <article class="proof-card"><strong>Live</strong><p>Venue, policy, citation, and paper metadata checks are designed to re-verify from public sources.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta" aria-labelledby="cta-heading">
+      <div class="wrap final-inner">
+        <div>
+          <h2 id="cta-heading">Use the skills directly from GitHub.</h2>
+          <p>Browse the public source, inspect every skill, install the package, or open an issue for a new research workflow.</p>
+        </div>
+        <a class="button secondary" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">View repository</a>
       </div>
     </section>
   </main>
@@ -403,5 +955,81 @@ prepare-camera-ready -> make-slides -> write-talk-script -> rehearse-qa -> make-
       <a href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">github.com/ShaishavMaisuria/research-paper-lifecycle-skills</a>
     </div>
   </footer>
+
+  <script>
+    const cards = Array.from(document.querySelectorAll(".skill-card"));
+    const filters = Array.from(document.querySelectorAll(".filter"));
+    const search = document.querySelector("#skill-search");
+    const count = document.querySelector("#skill-count");
+    let activeFilter = "all";
+
+    function applySkillFilters() {
+      const query = search.value.trim().toLowerCase();
+      let shown = 0;
+
+      cards.forEach((card) => {
+        const stageMatch = activeFilter === "all" || card.dataset.stage === activeFilter;
+        const textMatch = !query || card.textContent.toLowerCase().includes(query);
+        const visible = stageMatch && textMatch;
+        card.hidden = !visible;
+        if (visible) shown += 1;
+      });
+
+      count.textContent = `Showing ${shown} ${shown === 1 ? "skill" : "skills"}`;
+    }
+
+    filters.forEach((button) => {
+      button.addEventListener("click", () => {
+        activeFilter = button.dataset.filter;
+        filters.forEach((item) => item.classList.toggle("active", item === button));
+        applySkillFilters();
+      });
+    });
+
+    search.addEventListener("input", applySkillFilters);
+    applySkillFilters();
+
+    function selectCommandText(button) {
+      const command = button.closest(".install-panel").querySelector(".install-command");
+      const range = document.createRange();
+      range.selectNodeContents(command);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const value = button.dataset.copy;
+        let copied = false;
+
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(value);
+            copied = true;
+          }
+        } catch {
+          copied = false;
+        }
+
+        if (!copied) {
+          selectCommandText(button);
+          try {
+            copied = document.execCommand("copy");
+          } catch {
+            copied = false;
+          }
+        }
+
+        if (copied) {
+          button.textContent = "Copied";
+          setTimeout(() => { button.textContent = "Copy"; }, 1400);
+        } else {
+          button.textContent = "Selected";
+          setTimeout(() => { button.textContent = "Copy"; }, 1800);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
