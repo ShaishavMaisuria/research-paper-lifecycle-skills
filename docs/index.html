@@ -607,6 +607,13 @@
       color: #c5cfdf;
     }
 
+    .final-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
     footer {
       padding: 42px 0;
       color: var(--muted);
@@ -711,7 +718,9 @@
       }
 
       .button,
-      .actions {
+      .actions,
+      .final-actions,
+      .final-actions .button {
         width: 100%;
       }
 
@@ -1005,9 +1014,12 @@ npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent gemini</
       <div class="wrap final-inner">
         <div>
           <h2 id="cta-heading">Use the skills directly from GitHub.</h2>
-          <p>Browse the public source, inspect every skill, install the package, or open an issue for a new research workflow.</p>
+          <p>Browse the public source, inspect every skill, install the package, or suggest the next research workflow.</p>
         </div>
-        <a class="button secondary" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">View repository</a>
+        <div class="final-actions">
+          <a class="button secondary" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">View repository</a>
+          <a class="button secondary" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/discussions/1">Suggest workflow</a>
+        </div>
       </div>
     </section>
   </main>
