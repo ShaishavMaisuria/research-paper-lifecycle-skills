@@ -1,0 +1,45 @@
+# Research Paper Lifecycle Skills
+
+Research Paper Lifecycle Skills is a public Agent Skills package for academic and scientific research workflows. It contains 42 reusable AI agent skills for literature discovery, academic writing, citation verification, venue and CFP checks, submission readiness, peer-review rebuttal, camera-ready preparation, reproducibility artifacts, slides, talk scripts, Q&A rehearsal, and posters.
+
+Repository: https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills
+Website: https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/
+Release: https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/releases/tag/v1.0.0
+License: Apache-2.0
+Install: npx skills add ShaishavMaisuria/research-paper-lifecycle-skills
+
+## What this project is for
+
+- Researchers, PhD students, labs, reviewers, and research-tool builders.
+- Field-agnostic paper workflows where public venue guidance and citation metadata can be checked live.
+- AI agents compatible with the Agent Skills format, including Codex, Cursor, Gemini CLI, Claude Code, and other compatible environments.
+
+## What this project does not include
+
+- No bundled paper PDFs, copied abstracts, private reviews, generated caches, benchmark fixtures, or copyrighted paper corpora.
+- No autonomous submission, account creation, payment, or upload behavior.
+- No fabricated citations, venue facts, reviewer identities, or acceptance predictions.
+
+## Skill groups
+
+- Start: orchestrate-paper, assess-paper, paper-profile, reflect-paper, reflect-and-improve, render-workspace-html.
+- Discover: find-papers, fetch-paper, study-exemplars, literature-review.
+- Write: draft-survey, write-abstract, draft-related-work, polish-prose, match-style, polish-tables-figures, refactor-structure, fit-page-limit, work-with-overleaf.
+- Verify: verify-citations, check-originality, verify-claims.
+- Submit: parse-cfp, add-venue-profile, select-venue, tailor-to-venue, preflight-check, anonymize-paper, plan-submission, simulate-reviewers, benchmark-paper.
+- Respond: triage-reviews, write-rebuttal.
+- Publish and artifacts: prepare-camera-ready, test-research-code, verify-results, refactor-research-code, prepare-artifacts.
+- Present: make-slides, write-talk-script, rehearse-qa, make-poster.
+
+## Example user requests
+
+- "Will this get desk-rejected at an IEEE conference? Check my main.tex against this CFP."
+- "Verify refs.bib and flag fabricated or mismatched citations."
+- "Write a ranked reading list and two-column arXiv survey draft on geospatial data conflation."
+- "Humanize this section, but do not change any claims."
+- "Turn these reviews into a rebuttal plan with severity and effort."
+- "Prepare camera-ready files and then make slides, a talk script, Q&A practice, and a poster."
+
+## Good citation or directory description
+
+42 AI agent skills for literature review, academic writing, citation verification, conference submission, rebuttal, publication, artifacts, and presentations.

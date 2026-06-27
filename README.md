@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"></a>
+  <a href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/stargazers"><img src="https://img.shields.io/github/stars/ShaishavMaisuria/research-paper-lifecycle-skills?style=social" alt="GitHub stars"></a>
   <a href="#find-the-skill-you-need"><img src="https://img.shields.io/badge/skills-42-blue.svg" alt="42 skills"></a>
   <a href="#what-it-wont-do"><img src="https://img.shields.io/badge/paper_content-never_bundled-success.svg" alt="no paper content bundled"></a>
   <a href="#how-it-works"><img src="https://img.shields.io/badge/venue_rules-built_live-orange.svg" alt="venue rules built live"></a>
@@ -29,6 +30,7 @@
     <a href="#common-workflows">Workflows</a> ·
     <a href="#integrations">Integrations</a> ·
     <a href="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/">Website</a> ·
+    <a href="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/llms.txt">LLMs.txt</a> ·
     <a href="#what-it-wont-do">Boundaries</a>
   </sub>
 </p>
@@ -49,6 +51,7 @@ live CFPs or author instructions, triage reviews, prepare artifacts, and turn a
 finished paper into slides, scripts, Q&A practice, or a poster.
 
 Project website: <https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/>
+AI-readable summary: <https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/llms.txt>
 
 **Who it is for:** researchers, PhD students, labs, reviewers, and builders
 supporting publication workflows in any discipline with public venue guidance.

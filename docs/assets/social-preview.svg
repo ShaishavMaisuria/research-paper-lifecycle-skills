@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Research Paper Lifecycle Skills social preview">
+  <rect width="1200" height="630" fill="#f7f9fc"/>
+  <rect x="64" y="58" width="1072" height="514" rx="28" fill="#ffffff" stroke="#d8e0ec"/>
+  <rect x="96" y="90" width="66" height="66" rx="16" fill="#121623"/>
+  <text x="129" y="132" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="800" text-anchor="middle">RPL</text>
+  <text x="184" y="130" fill="#121623" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800">research-paper-lifecycle-skills</text>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="800">
+    <rect x="96" y="188" width="112" height="38" rx="19" fill="#edf2ff" stroke="#d6def5"/>
+    <text x="152" y="214" fill="#2c3f92" text-anchor="middle">42 skills</text>
+    <rect x="222" y="188" width="148" height="38" rx="19" fill="#e9f7f4" stroke="#cbece5"/>
+    <text x="296" y="214" fill="#087f73" text-anchor="middle">Apache-2.0</text>
+    <rect x="384" y="188" width="190" height="38" rx="19" fill="#fff4df" stroke="#f4dfb7"/>
+    <text x="479" y="214" fill="#8b5200" text-anchor="middle">AI agent skills</text>
+  </g>
+  <text x="96" y="302" fill="#121623" font-family="Arial, Helvetica, sans-serif" font-size="74" font-weight="900">Research Paper</text>
+  <text x="96" y="384" fill="#121623" font-family="Arial, Helvetica, sans-serif" font-size="74" font-weight="900">Lifecycle Skills</text>
+  <text x="100" y="440" fill="#5c6477" font-family="Arial, Helvetica, sans-serif" font-size="27">Literature review, writing, citation checks,</text>
+  <text x="100" y="480" fill="#5c6477" font-family="Arial, Helvetica, sans-serif" font-size="27">submissions, rebuttals, artifacts, slides, and posters.</text>
+  <g transform="translate(710 212)">
+    <rect width="338" height="230" rx="18" fill="#f3f7fb" stroke="#d8e0ec"/>
+    <path d="M42 67h254M42 113h210M42 159h238" stroke="#aab8cc" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="76" cy="113" r="54" fill="none" stroke="#2754d8" stroke-width="12"/>
+    <path d="M118 154l56 56" stroke="#087f73" stroke-width="14" stroke-linecap="round"/>
+  </g>
+  <text x="96" y="540" fill="#2754d8" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="800">github.com/ShaishavMaisuria/research-paper-lifecycle-skills</text>
+</svg>
