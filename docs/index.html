@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Paper Lifecycle Skills - AI Agent Skills for Academic Research</title>
+  <meta name="description" content="42 reusable AI agent skills for literature review, academic writing, citation verification, conference submission, peer review rebuttal, publication, posters, and research presentations.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/">
+  <meta property="og:title" content="Research Paper Lifecycle Skills">
+  <meta property="og:description" content="42 reusable AI agent skills for the complete academic research-paper lifecycle.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/">
+  <meta property="og:image" content="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/assets/hero.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Research Paper Lifecycle Skills">
+  <meta name="twitter:description" content="42 reusable AI agent skills for literature review, writing, citation checks, submission, rebuttal, publication, and presentations.">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #12131f;
+      --muted: #5b6178;
+      --line: #dfe4ef;
+      --soft: #f7f8fc;
+      --accent: #4f46e5;
+      --accent-2: #0ea5e9;
+      --green: #0f9f75;
+      --panel: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #fbfcff;
+      line-height: 1.5;
+    }
+
+    a { color: inherit; }
+
+    .hero {
+      min-height: 86vh;
+      display: grid;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 48%, rgba(255, 255, 255, 0.55) 100%),
+        url("assets/hero.svg") right 8% center / min(780px, 58vw) auto no-repeat,
+        #f7f8fc;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    nav {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .nav-links a { text-decoration: none; }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 7px;
+      background: var(--ink);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 750;
+      border: 1px solid var(--ink);
+    }
+
+    .button.secondary {
+      background: #fff;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .hero-copy {
+      max-width: 650px;
+      padding: 120px 0 86px;
+    }
+
+    .eyebrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+      color: #312e81;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .eyebrow span {
+      border: 1px solid #d8d4f5;
+      background: #f3f1ff;
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 780px;
+      font-size: clamp(44px, 7vw, 84px);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 22px 0 0;
+      max-width: 620px;
+      font-size: clamp(18px, 2vw, 22px);
+      color: var(--muted);
+    }
+
+    .actions {
+      margin-top: 32px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .install {
+      margin-top: 28px;
+      width: min(100%, 720px);
+      border: 1px solid #cfd6e6;
+      background: #101827;
+      color: #e7edf8;
+      border-radius: 8px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font: 15px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    section {
+      padding: 72px 0;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(260px, 0.55fr);
+      gap: 40px;
+      align-items: end;
+      margin-bottom: 28px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .section-head p,
+    .muted {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .tile {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 156px;
+    }
+
+    .tile strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 17px;
+    }
+
+    .tile p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .lifecycle {
+      width: 100%;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .band {
+      background: #f4f7fb;
+      border-block: 1px solid var(--line);
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .workflow code {
+      display: block;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: #283044;
+      overflow-x: auto;
+      font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .proof {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 22px;
+    }
+
+    .proof strong {
+      display: block;
+      color: var(--green);
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      padding: 42px 0;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+    }
+
+    @media (max-width: 840px) {
+      .hero {
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.91) 64%, rgba(255, 255, 255, 0.78) 100%),
+          url("assets/hero.svg") center bottom 24px / 780px auto no-repeat,
+          #f7f8fc;
+        min-height: 92vh;
+      }
+
+      nav { height: auto; padding: 18px 0; }
+      .nav-inner { align-items: flex-start; }
+      .nav-links { display: none; }
+      .hero-copy { padding: 100px 0 260px; }
+      .section-head,
+      .grid,
+      .workflow,
+      .proof {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    "name": "research-paper-lifecycle-skills",
+    "description": "42 reusable AI agent skills for literature review, academic writing, citation verification, conference submission, peer review rebuttal, publication, posters, and research presentations.",
+    "codeRepository": "https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills",
+    "license": "https://www.apache.org/licenses/LICENSE-2.0",
+    "programmingLanguage": ["Markdown", "Python"],
+    "author": {
+      "@type": "Person",
+      "name": "Shaishav Maisuria"
+    }
+  }
+  </script>
+</head>
+<body>
+  <main>
+    <section class="hero" id="top">
+      <nav aria-label="Primary">
+        <div class="wrap nav-inner">
+          <a class="brand" href="#top">research-paper-lifecycle-skills</a>
+          <div class="nav-links">
+            <a href="#skills">Skills</a>
+            <a href="#workflows">Workflows</a>
+            <a href="#install">Install</a>
+            <a href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">GitHub</a>
+          </div>
+        </div>
+      </nav>
+      <div class="wrap hero-copy">
+        <div class="eyebrow">
+          <span>42 skills</span>
+          <span>Apache-2.0</span>
+          <span>agentskills.io</span>
+        </div>
+        <h1>AI agent skills for the full research-paper lifecycle.</h1>
+        <p class="lead">Discover literature, verify citations, write and polish academic drafts, check venue rules, prepare submissions, respond to reviews, publish camera-ready files, and present the work.</p>
+        <div class="actions">
+          <a class="button" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">Open on GitHub</a>
+          <a class="button secondary" href="#install">Install skills</a>
+        </div>
+        <pre class="install" id="install">npx skills add ShaishavMaisuria/research-paper-lifecycle-skills</pre>
+      </div>
+    </section>
+
+    <section id="skills">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Built for the work around the paper.</h2>
+          <p>Each folder is a portable Agent Skills task with trigger rules, guardrails, references, and deterministic helpers where repeatability matters.</p>
+        </div>
+        <div class="grid">
+          <div class="tile"><strong>Discover</strong><p>Find papers, fetch legal open-access copies, study exemplars, and build grounded literature reviews.</p></div>
+          <div class="tile"><strong>Write</strong><p>Draft abstracts, related work, surveys, prose edits, structure repairs, and figure/table polish.</p></div>
+          <div class="tile"><strong>Verify</strong><p>Catch fabricated citations, unsupported claims, originality risks, and reproducibility gaps.</p></div>
+          <div class="tile"><strong>Submit</strong><p>Parse CFPs, tailor drafts to venues, anonymize, check page limits, and simulate reviewers.</p></div>
+          <div class="tile"><strong>Respond</strong><p>Triage reviews and draft author responses for rebuttal, revision, and journal workflows.</p></div>
+          <div class="tile"><strong>Publish and present</strong><p>Prepare camera-ready packages, artifacts, slides, talk scripts, Q&A practice, and posters.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>One lifecycle map, many specialist skills.</h2>
+          <p>Use one skill directly or let an agent orchestrate the sequence with checkpoints and live source verification.</p>
+        </div>
+        <img class="lifecycle" src="assets/lifecycle.svg" alt="Lifecycle map showing discover, write, verify, submit, rebut, publish, and present skills">
+      </div>
+    </section>
+
+    <section id="workflows">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Common research workflows.</h2>
+          <p>Plain-language requests trigger the right skill and keep the author in control.</p>
+        </div>
+        <div class="workflow">
+          <code>New paper:
+paper-profile -> literature-review -> write-abstract -> draft-related-work -> polish-prose</code>
+          <code>Before submit:
+parse-cfp -> tailor-to-venue -> anonymize-paper -> preflight-check</code>
+          <code>Survey draft:
+find-papers -> draft-survey -> verify-citations -> polish-prose</code>
+          <code>Accepted:
+prepare-camera-ready -> make-slides -> write-talk-script -> rehearse-qa -> make-poster</code>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="proof">
+          <div><strong>42</strong><span class="muted">agent skills linked from the README and installable through the Agent Skills CLI.</span></div>
+          <div><strong>0</strong><span class="muted">bundled papers or copyrighted corpora. Paper content is fetched only when legal and needed.</span></div>
+          <div><strong>5</strong><span class="muted">scholarly metadata sources used by search and citation workflows without required API keys.</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      Copyright 2026 Shaishav Maisuria. Licensed Apache-2.0. Repository:
+      <a href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills">github.com/ShaishavMaisuria/research-paper-lifecycle-skills</a>
+    </div>
+  </footer>
+</body>
+</html>

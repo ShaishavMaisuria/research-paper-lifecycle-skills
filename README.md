@@ -18,6 +18,7 @@
   <a href="#what-it-wont-do"><img src="https://img.shields.io/badge/paper_content-never_bundled-success.svg" alt="no paper content bundled"></a>
   <a href="#how-it-works"><img src="https://img.shields.io/badge/venue_rules-built_live-orange.svg" alt="venue rules built live"></a>
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/standard-agentskills.io-black.svg" alt="agentskills.io"></a>
+  <a href="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/"><img src="https://img.shields.io/badge/website-GitHub_Pages-0ea5e9.svg" alt="Project website"></a>
 </p>
 
 <p align="center">
@@ -27,6 +28,7 @@
     <a href="#find-the-skill-you-need">All 42 skills</a> ·
     <a href="#common-workflows">Workflows</a> ·
     <a href="#integrations">Integrations</a> ·
+    <a href="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/">Website</a> ·
     <a href="#what-it-wont-do">Boundaries</a>
   </sub>
 </p>
@@ -45,6 +47,8 @@ playbook for the research work around the paper. It can search and verify
 sources, tighten writing without changing claims, check venue rules against
 live CFPs or author instructions, triage reviews, prepare artifacts, and turn a
 finished paper into slides, scripts, Q&A practice, or a poster.
+
+Project website: <https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/>
 
 **Who it is for:** researchers, PhD students, labs, reviewers, and builders
 supporting publication workflows in any discipline with public venue guidance.
@@ -307,6 +311,7 @@ outputs only.
 
 ```text
 assets/                         README and community visuals
+docs/                           GitHub Pages landing page and crawl files
 skills/                         42 agent skills
   <skill>/SKILL.md               instructions and guardrails
   <skill>/references/            supporting guidance

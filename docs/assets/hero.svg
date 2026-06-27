@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 326" role="img" aria-label="research-paper-lifecycle-skills — from idea to camera-ready">
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f7f8fd"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4f46e5"/>
+      <stop offset="0.5" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.12" cy="0" r="0.5">
+      <stop offset="0" stop-color="#7c3aed" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0.95" cy="1" r="0.45">
+      <stop offset="0" stop-color="#0ea5e9" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .title { font-size: 48px; font-weight: 800; fill: #111827; letter-spacing: -1.2px; }
+      .tag   { font-size: 20px; font-weight: 500; fill: #475569; }
+      .chip  { font-size: 16.5px; font-weight: 600; fill: #1e293b; }
+      .stat  { font-size: 15px; font-weight: 500; fill: #64748b; }
+      .statn { font-size: 15px; font-weight: 800; fill: #7c3aed; }
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="324" rx="20" fill="url(#card)" stroke="#e6e8f1" stroke-width="1.5"/>
+  <rect width="1200" height="326" rx="20" fill="url(#glow)"/>
+  <rect width="1200" height="326" rx="20" fill="url(#glow2)"/>
+  <rect x="28" y="0" width="1144" height="5" rx="2.5" fill="url(#bar)"/>
+
+  <text x="60" y="88" class="title">research-paper-lifecycle-skills</text>
+  <text x="60" y="126" class="tag">From idea to camera-ready — your AI copilot for the whole publishing lifecycle.</text>
+
+  <!-- lifecycle pipeline: centered labels, indigo→cyan border flow, evenly pitched -->
+  <g transform="translate(60,166)">
+    <!-- pitch = 184 (150 chip + 34 gap); arrows centered in the gap at y=23 -->
+    <g>
+      <rect width="150" height="46" rx="23" fill="#ffffff" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Idea</text>
+    </g>
+    <path d="M159 23 h14 m-5 -4.5 l5 4.5 l-5 4.5" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(184,0)">
+      <rect width="150" height="46" rx="23" fill="#ffffff" stroke="#7152e6" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Write</text>
+    </g>
+    <path d="M343 23 h14 m-5 -4.5 l5 4.5 l-5 4.5" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(368,0)">
+      <rect width="150" height="46" rx="23" fill="#ffffff" stroke="#6a73dd" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Verify</text>
+    </g>
+    <path d="M527 23 h14 m-5 -4.5 l5 4.5 l-5 4.5" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(552,0)">
+      <rect width="150" height="46" rx="23" fill="#ffffff" stroke="#3f93d4" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Submit</text>
+    </g>
+    <path d="M711 23 h14 m-5 -4.5 l5 4.5 l-5 4.5" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(736,0)">
+      <rect width="150" height="46" rx="23" fill="#ffffff" stroke="#21abcf" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Rebut</text>
+    </g>
+    <path d="M895 23 h14 m-5 -4.5 l5 4.5 l-5 4.5" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(920,0)">
+      <rect width="150" height="46" rx="23" fill="#ffffff" stroke="#0ea5e9" stroke-width="1.5"/>
+      <text x="75" y="29" text-anchor="middle" class="chip">Present</text>
+    </g>
+  </g>
+
+  <!-- stat strip: single aligned line, accent numbers, dot separators -->
+  <text x="60" y="288" class="stat"><tspan class="statn">42</tspan> skills &#160;·&#160; venue rules verified live &#160;·&#160; <tspan class="statn">0</tspan> bundled papers &#160;·&#160; <tspan class="statn">5</tspan> scholarly APIs, no key &#160;·&#160; Apache-2.0 · agentskills.io</text>
+</svg>
