@@ -54,6 +54,8 @@ finished paper into slides, scripts, Q&A practice, or a poster.
 
 Project website: <https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/>
 AI-readable summary: <https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/llms.txt>
+Full LLM context: <https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/llms-full.txt>
+AI research-tools guide: <https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/ai-research-tools.html>
 Share and directory copy: [LAUNCH.md](LAUNCH.md)
 Suggest a workflow: <https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/discussions/1>
 

@@ -5,6 +5,8 @@ Use this for human, non-spammy sharing. The best audience is researchers, PhD st
 Project: https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills
 Website: https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/
 AI-readable summary: https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/llms.txt
+Full LLM context: https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/llms-full.txt
+AI research tools guide: https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/ai-research-tools.html
 
 ## One-line pitch
 
