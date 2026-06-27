@@ -147,6 +147,10 @@
       text-overflow: ellipsis;
     }
 
+    .brand-short {
+      display: none;
+    }
+
     .nav-links {
       display: flex;
       align-items: center;
@@ -346,7 +350,8 @@
 
     .path-grid,
     .proof-grid,
-    .integration-grid {
+    .integration-grid,
+    .share-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 14px;
@@ -355,6 +360,7 @@
     .path-card,
     .proof-card,
     .integration-card,
+    .share-card,
     .workflow-card,
     .skill-card {
       border: 1px solid var(--line);
@@ -541,6 +547,35 @@
       font-size: 18px;
     }
 
+    .share-card {
+      display: block;
+      padding: 18px;
+      color: inherit;
+      text-decoration: none;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .share-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .share-card:hover {
+      transform: translateY(-2px);
+      border-color: #bac6d9;
+      box-shadow: 0 16px 38px rgba(30, 41, 59, 0.10);
+    }
+
+    .share-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .share-card span {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
     .proof-card {
       padding: 22px;
     }
@@ -610,6 +645,7 @@
       .path-grid,
       .proof-grid,
       .integration-grid,
+      .share-grid,
       .skill-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -625,7 +661,15 @@
       }
 
       .brand-text {
-        max-width: 210px;
+        max-width: none;
+      }
+
+      .brand-full {
+        display: none;
+      }
+
+      .brand-short {
+        display: inline;
       }
 
       .nav-links a:not(.nav-cta) {
@@ -678,6 +722,7 @@
       .path-grid,
       .proof-grid,
       .integration-grid,
+      .share-grid,
       .workflow-grid,
       .skill-grid {
         grid-template-columns: 1fr;
@@ -725,7 +770,7 @@
     <div class="wrap nav-inner">
       <a class="brand" href="#top" aria-label="Research Paper Lifecycle Skills home">
         <span class="brand-mark">RPL</span>
-        <span class="brand-text">research-paper-lifecycle-skills</span>
+        <span class="brand-text"><span class="brand-full">research-paper-lifecycle-skills</span><span class="brand-short">RPL skills</span></span>
       </a>
       <div class="nav-links">
         <a href="#skills">Skills</a>
@@ -937,6 +982,21 @@ npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent gemini</
           <article class="proof-card"><strong>42</strong><p>Skills linked from the README and installable through the Agent Skills CLI.</p></article>
           <article class="proof-card"><strong>0</strong><p>Bundled papers, copied abstracts, private reviews, generated caches, or benchmark fixtures.</p></article>
           <article class="proof-card"><strong>Live</strong><p>Venue, policy, citation, and paper metadata checks are designed to re-verify from public sources.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="share-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="share-heading">Share it with researchers.</h2>
+          <p>A few good links beat a thousand bad ones. These share targets are for people who care about research workflows, not drive-by traffic.</p>
+        </div>
+        <div class="share-grid">
+          <a class="share-card" href="https://twitter.com/intent/tweet?text=42%20AI%20agent%20skills%20for%20the%20research-paper%20lifecycle%3A%20literature%20review%2C%20citation%20verification%2C%20submission%20checks%2C%20rebuttals%2C%20artifacts%2C%20slides%2C%20and%20posters.&url=https%3A%2F%2Fgithub.com%2FShaishavMaisuria%2Fresearch-paper-lifecycle-skills" target="_blank" rel="noopener"><strong>Post on X</strong><span>Short launch post for researchers and AI-tool builders.</span></a>
+          <a class="share-card" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2FShaishavMaisuria%2Fresearch-paper-lifecycle-skills" target="_blank" rel="noopener"><strong>Share on LinkedIn</strong><span>Best for labs, PhD students, and academic tooling networks.</span></a>
+          <a class="share-card" href="https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fgithub.com%2FShaishavMaisuria%2Fresearch-paper-lifecycle-skills&t=Research%20Paper%20Lifecycle%20Skills%20-%2042%20AI%20agent%20skills%20for%20academic%20research%20workflows" target="_blank" rel="noopener"><strong>Submit to Hacker News</strong><span>Good if framed as a useful open-source tool, not a hype post.</span></a>
+          <a class="share-card" href="https://github.com/ShaishavMaisuria/research-paper-lifecycle-skills/blob/main/LAUNCH.md" target="_blank" rel="noopener"><strong>Open launch kit</strong><span>Copy posts, directory text, and awesome-list entry wording.</span></a>
         </div>
       </div>
     </section>

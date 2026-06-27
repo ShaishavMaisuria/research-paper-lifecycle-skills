@@ -30,6 +30,7 @@
     <a href="#common-workflows">Workflows</a> ·
     <a href="#integrations">Integrations</a> ·
     <a href="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/">Website</a> ·
+    <a href="LAUNCH.md">Launch kit</a> ·
     <a href="https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/llms.txt">LLMs.txt</a> ·
     <a href="#what-it-wont-do">Boundaries</a>
   </sub>
@@ -52,6 +53,7 @@ finished paper into slides, scripts, Q&A practice, or a poster.
 
 Project website: <https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/>
 AI-readable summary: <https://shaishavmaisuria.github.io/research-paper-lifecycle-skills/llms.txt>
+Share and directory copy: [LAUNCH.md](LAUNCH.md)
 
 **Who it is for:** researchers, PhD students, labs, reviewers, and builders
 supporting publication workflows in any discipline with public venue guidance.
