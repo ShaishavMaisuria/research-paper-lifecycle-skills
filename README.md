@@ -81,6 +81,16 @@ npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --list
 npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --skill preflight-check
 ```
 
+For citation checks only:
+
+```bash
+npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --skill verify-citations
+```
+
+`verify-citations` includes its own memory reference and works independently.
+`paper-profile` and `reflect-and-improve` are optional companions; without the
+logging helper, the skill records lessons directly in local Markdown.
+
 ```bash
 # Install into a supported agent target
 npx skills add ShaishavMaisuria/research-paper-lifecycle-skills --agent codex

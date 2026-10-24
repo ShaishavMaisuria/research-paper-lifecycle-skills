@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Run citation checker regression tests
+        run: python3 skills/verify-citations/scripts/check_bibtex.py --self-test
       - name: Validate SKILL.md frontmatter + marketplace skill paths
         run: |
           python3 - <<'PY'

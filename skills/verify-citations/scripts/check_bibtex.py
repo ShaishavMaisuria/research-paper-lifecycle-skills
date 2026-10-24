@@ -38,8 +38,9 @@ Flags raised:
 
 Politeness: <=1 request/second per host (3 s for arXiv, per their etiquette),
 User-Agent "research-paper-skills (mailto:$CONTACT_EMAIL)", exponential
-backoff on HTTP 429, responses cached under .cache/verify-citations/
-(gitignored), single-item fetches only — never bulk.
+backoff on HTTP 429/5xx (then SOFT_FAIL, not a hard abort), responses cached
+under .cache/verify-citations/ (gitignored), single-item fetches only — never
+bulk.
 
 Exit codes: 0 = no errors found; 2 = problems found (see report);
 1 = operational failure (bad file, missing CONTACT_EMAIL). A *single* index
@@ -250,19 +251,33 @@ def http_get(url, *, min_interval=1.0, headers=None, ttl=None,
                     _save_json(cpath, {"url": url, "status": e.code,
                                        "fetched_at": time.time()})
                 return None
-            if e.code == 429 and attempt < MAX_RETRIES:
-                sleep_s = delay
-                retry_after = e.headers.get("Retry-After")
-                if retry_after:
-                    try:
-                        sleep_s = max(float(retry_after), delay)
-                    except ValueError:
-                        pass
-                print(f"  HTTP 429 from {host}; backing off {sleep_s:.0f}s "
-                      f"(attempt {attempt}/{MAX_RETRIES})", file=sys.stderr)
-                time.sleep(sleep_s)
-                delay *= 2
-                continue
+            # 429 (rate limit) and 5xx (server) errors are transient: back off
+            # and retry. Once retries are exhausted, break and fall through to
+            # the SOFT_FAIL handling after the loop — exactly like the URLError
+            # path below. Do NOT fail() here: on the final attempt that would
+            # abort the whole run for one rate-limited index (commonly Semantic
+            # Scholar's anonymous pool without S2_API_KEY) even though SOFT_FAIL
+            # is on and promises a PARTIAL-PASS rather than a hard exit.
+            if e.code == 429 or 500 <= e.code < 600:
+                last_err = f"HTTP {e.code}"
+                if attempt < MAX_RETRIES:
+                    sleep_s = delay
+                    retry_after = e.headers.get("Retry-After")
+                    if retry_after:
+                        try:
+                            sleep_s = max(float(retry_after), delay)
+                        except ValueError:
+                            pass
+                    print(f"  HTTP {e.code} from {host}; backing off "
+                          f"{sleep_s:.0f}s (attempt {attempt}/{MAX_RETRIES})",
+                          file=sys.stderr)
+                    time.sleep(sleep_s)
+                    delay *= 2
+                    continue
+                break  # retries exhausted -> soft-fail handling below the loop
+            # Non-retryable HTTP error (e.g. 400/401/403): retrying will not
+            # help and it signals a real problem, so surface it immediately
+            # even under SOFT_FAIL.
             detail = ""
             try:
                 detail = e.read().decode("utf-8", "replace")[:200]
@@ -1502,14 +1517,201 @@ def entry_status(flags, online: bool, entry_type: str):
     return "VERIFIED*" if warns else "VERIFIED"
 
 
-def _run_self_test() -> bool:
-    """Offline unit tests for the deterministic ENTRY_TYPE_MISMATCH check.
+def _http_429(code=429):
+    """Build a urlopen stand-in that always raises an HTTPError with `code`,
+    mimicking a host whose rate-limit/server error never clears."""
+    def _open(req, timeout=None):
+        raise urllib.error.HTTPError(
+            req.full_url, code, "simulated", {"Retry-After": "0"}, None)
+    return _open
 
-    No network: every case feeds entry_type_flags() a hand-built resolved
-    record, mirroring what the indexes return. Covers the recurring failure
-    (journal article / monograph typed @inproceedings, @inproceedings carrying
-    a journal= field) and guards against false positives on a correct @article,
-    a correct @inproceedings, and deliberately-loose @misc/@online types."""
+
+def _test_http_get_retry_exhaustion() -> bool:
+    """Unit guard for http_get's retry-exhaustion branch.
+
+    A persistent 429 (rate limit) or 5xx (server) is transient: with SOFT_FAIL
+    on, http_get must RETURN SOFT_FAIL_RESULT and record the host as
+    unreachable — never sys.exit. With SOFT_FAIL off it must hard-fail. A
+    non-retryable 4xx (e.g. 400) is a real error and must hard-fail even under
+    SOFT_FAIL, since retrying cannot fix it. Regression for the bug where the
+    final-attempt 429 fell through to fail() instead of the soft-fail path."""
+    import io
+    import contextlib
+
+    global SOFT_FAIL
+    saved = (urllib.request.urlopen, time.sleep, _throttle, SOFT_FAIL,
+             os.environ.get("CONTACT_EMAIL"), set(UNREACHABLE_HOSTS))
+    url = "https://api.semanticscholar.org/graph/v1/paper/search?query=x"
+    results = []
+    try:
+        time.sleep = lambda *a, **k: None              # no real backoff waits
+        globals()["_throttle"] = lambda *a, **k: None  # no rate-limit sleeps
+        os.environ["CONTACT_EMAIL"] = "selftest@example.com"  # http_get needs it
+
+        # http_get prints backoff/WARNING/ERROR lines as it works (cases 3 & 4
+        # deliberately hit the hard-fail path); swallow that so the self-test
+        # output stays readable.
+        with contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()):
+            # 1. persistent 429, SOFT_FAIL on -> sentinel, host recorded, no
+            # exit. A SystemExit here IS the bug (the run aborting on a flaky
+            # index), so catch it and record a failure rather than letting it
+            # kill the whole self-test.
+            SOFT_FAIL = True
+            UNREACHABLE_HOSTS.clear()
+            urllib.request.urlopen = _http_429(429)
+            try:
+                r = http_get(url, use_cache=False)
+            except SystemExit:
+                r = "ABORTED"
+            results.append(("persistent 429 returns SOFT_FAIL_RESULT",
+                            r is SOFT_FAIL_RESULT
+                            and "api.semanticscholar.org" in UNREACHABLE_HOSTS))
+
+            # 2. persistent 503 (5xx) is also treated as transient -> sentinel
+            UNREACHABLE_HOSTS.clear()
+            urllib.request.urlopen = _http_429(503)
+            try:
+                r = http_get(url, use_cache=False)
+            except SystemExit:
+                r = "ABORTED"
+            results.append(("persistent 5xx returns SOFT_FAIL_RESULT",
+                            r is SOFT_FAIL_RESULT))
+
+            # 3. persistent 429 with --no-soft-fail -> hard abort preserved
+            SOFT_FAIL = False
+            UNREACHABLE_HOSTS.clear()
+            urllib.request.urlopen = _http_429(429)
+            try:
+                http_get(url, use_cache=False)
+                hard_ok = False
+            except SystemExit:
+                hard_ok = True
+            results.append(("persistent 429 hard-fails under --no-soft-fail",
+                            hard_ok))
+
+            # 4. non-retryable 4xx still hard-fails even under SOFT_FAIL
+            SOFT_FAIL = True
+            UNREACHABLE_HOSTS.clear()
+            urllib.request.urlopen = _http_429(400)
+            try:
+                http_get(url, use_cache=False)
+                client_ok = False
+            except SystemExit:
+                client_ok = True
+            results.append(("non-retryable 400 still hard-fails under SOFT_FAIL",
+                            client_ok))
+    finally:
+        (urllib.request.urlopen, time.sleep, throttle, SOFT_FAIL,
+         email, unreach) = saved
+        globals()["_throttle"] = throttle
+        if email is None:
+            os.environ.pop("CONTACT_EMAIL", None)
+        else:
+            os.environ["CONTACT_EMAIL"] = email
+        UNREACHABLE_HOSTS.clear()
+        UNREACHABLE_HOSTS.update(unreach)
+
+    ok = all(p for _, p in results)
+    for name, passed in results:
+        print(f"  [{'PASS' if passed else 'FAIL'}] http_get-retry: {name}")
+    return ok
+
+
+def _test_persistent_429_partial_pass() -> bool:
+    """End-to-end regression: a persistent HTTP 429 from the scholarly indexes
+    (the common case for Semantic Scholar's anonymous pool with no S2_API_KEY)
+    must NOT abort the run with exit 1. With SOFT_FAIL on (the default) the run
+    completes, the verdict degrades to PARTIAL-PASS, and the --json report is
+    still written. Drives main() in-process against an always-429 network."""
+    import io
+    import contextlib
+    import tempfile
+
+    bib = (
+        "@article{soft2024,\n"
+        "  author  = {A. Researcher and B. Coauthor},\n"
+        "  title   = {A Representative Title For The 429 Regression Test},\n"
+        "  journal = {Journal of Testing},\n"
+        "  year    = {2024},\n"
+        "  doi     = {10.1234/regression.429}\n"
+        "}\n"
+    )
+    tmpdir = tempfile.mkdtemp(prefix="vc-429-e2e-")
+    bibpath = os.path.join(tmpdir, "refs.bib")
+    jsonpath = os.path.join(tmpdir, "report.json")
+    with open(bibpath, "w", encoding="utf-8") as f:
+        f.write(bib)
+
+    saved = (urllib.request.urlopen, time.sleep, _throttle,
+             globals()["CACHE_DIR"], sys.argv[:],
+             os.environ.get("CONTACT_EMAIL"), set(UNREACHABLE_HOSTS))
+    exit_code = None
+    report = None
+    try:
+        urllib.request.urlopen = _http_429(429)
+        time.sleep = lambda *a, **k: None
+        globals()["_throttle"] = lambda *a, **k: None
+        globals()["CACHE_DIR"] = tmpdir   # hermetic: no stale cached 200 reads
+        os.environ["CONTACT_EMAIL"] = "selftest@example.com"
+        UNREACHABLE_HOSTS.clear()
+        sys.argv = ["check_bibtex.py", bibpath, "--json", jsonpath]
+        # main() prints the full run and calls sys.exit; capture both.
+        with contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()):
+            try:
+                main()
+            except SystemExit as e:
+                exit_code = (e.code if isinstance(e.code, int)
+                             else (0 if e.code is None else 1))
+        if os.path.exists(jsonpath):
+            with open(jsonpath, "r", encoding="utf-8") as f:
+                report = json.load(f)
+    finally:
+        (urllib.request.urlopen, time.sleep, throttle, cache, argv,
+         email, unreach) = saved
+        globals()["_throttle"] = throttle
+        globals()["CACHE_DIR"] = cache
+        sys.argv = argv
+        if email is None:
+            os.environ.pop("CONTACT_EMAIL", None)
+        else:
+            os.environ["CONTACT_EMAIL"] = email
+        UNREACHABLE_HOSTS.clear()
+        UNREACHABLE_HOSTS.update(unreach)
+        try:
+            for fn in os.listdir(tmpdir):
+                os.remove(os.path.join(tmpdir, fn))
+            os.rmdir(tmpdir)
+        except OSError:
+            pass
+
+    verdict = (report or {}).get("verdict")
+    results = [
+        ("run did not hard-abort mid-run (exit 1)", exit_code != 1),
+        ("exit code is 0 or 2", exit_code in (0, 2)),
+        ("--json report was written", report is not None),
+        ("verdict downgraded to PARTIAL-PASS", verdict == "PARTIAL-PASS"),
+    ]
+    ok = all(p for _, p in results)
+    for name, passed in results:
+        print(f"  [{'PASS' if passed else 'FAIL'}] persistent-429-e2e: {name}")
+    return ok
+
+
+def _run_self_test() -> bool:
+    """Offline unit tests, run with --self-test (no real network).
+
+    Two groups:
+      * the deterministic ENTRY_TYPE_MISMATCH check — every case feeds
+        entry_type_flags() a hand-built resolved record, mirroring what the
+        indexes return. Covers the recurring failure (journal article /
+        monograph typed @inproceedings, @inproceedings carrying a journal=
+        field) and guards against false positives on a correct @article, a
+        correct @inproceedings, and deliberately-loose @misc/@online types.
+      * the network-degradation path — urlopen is patched to always return a
+        429/5xx so a persistently rate-limited index degrades to PARTIAL-PASS
+        (and still writes --json) instead of aborting the whole run."""
     def codes(entry, src):
         return sorted(f[1] for f in entry_type_flags(entry, src))
 
@@ -1567,6 +1769,13 @@ def _run_self_test() -> bool:
         print(f"  [{'PASS' if passed else 'FAIL'}] {name}: "
               f"{'flagged' if flagged else 'clean'} "
               f"(expected {'flagged' if expect else 'clean'})")
+
+    # Network-degradation regression tests (no real network — urlopen is
+    # patched to always 429/5xx). Guards the soft-fail path: a rate-limited
+    # index must downgrade the verdict to PARTIAL-PASS, never abort with exit 1.
+    ok = _test_http_get_retry_exhaustion() and ok
+    ok = _test_persistent_429_partial_pass() and ok
+
     print("self-test:", "OK" if ok else "FAILED")
     return ok
 

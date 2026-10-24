@@ -74,9 +74,9 @@ and clean".
      the `CANONICAL_INSTANCE` wrong-artifact check (on by default).
    - `--no-soft-fail` — abort (exit 1) the instant any index is unreachable,
      instead of degrading to PARTIAL-PASS.
-   - `--self-test` — run the bundled offline unit tests for the deterministic
-     `ENTRY_TYPE_MISMATCH` check (no network, no `.bib` needed); exits 0 if they
-     pass. Use this to confirm the script is intact after editing it.
+   - `--self-test` — run the bundled offline regression tests for
+     `ENTRY_TYPE_MISMATCH`, HTTP retry exhaustion, and PARTIAL-PASS JSON
+     reporting (no network, no `.bib` needed); exits 0 if they pass.
 
    Exit codes: `0` clean, `2` problems found, `1` operational failure (bad
    file, no network, missing CONTACT_EMAIL — fix the cause, do not skip the
@@ -215,18 +215,27 @@ and clean".
 ## Memory
 
 This skill uses the shared `.paper-memory/` convention in the user's paper
-directory, following [`paper-memory-convention.md`](../paper-profile/references/paper-memory-convention.md).
+directory. Its required memory convention ships with the skill:
+[`references/paper-memory.md`](references/paper-memory.md), so it also works
+when installed on its own.
 
 - **At start:** read `.paper-memory/lessons.md` to skip re-flagging entries the
   user already resolved this cycle, and lead with any `recurring` citation
   habits recorded for this author (e.g. "tends to cite arXiv preprints that are
   now published; prefer the published record").
 - **At end:** append durable findings in the shared format `- [YYYY-MM-DD]
-  (verify-citations | <scope>) issue -> recommendation` (via
-  `reflect-and-improve`'s `reflect_log.py append`, which dedupes and dates). A
-  pattern across the bibliography or across papers is `recurring`; a single
-  fixed entry is `this-paper`. Never record fabricated metadata in memory, only
-  the pattern and the canonical fix.
+  (verify-citations | <scope>) issue -> recommendation`. If `reflect-and-improve`
+  is installed, use its `reflect_log.py append` to dedupe and date the entry.
+  Otherwise, append the one-line entry by hand using the dedupe and date rules
+  in [references/paper-memory.md](references/paper-memory.md). A pattern across
+  the bibliography or across papers is `recurring`; a single fixed entry is
+  `this-paper`. Never record fabricated metadata in memory, only the pattern
+  and the canonical fix.
 - Create `.paper-memory/` on demand if absent and offer to add it to the
   project `.gitignore`. It is local-only; never upload it or copy it into this
   repo.
+
+**Optional companions.** `verify-citations` works on its own. `paper-profile`
+(paper positioning and `.paper-memory/profile.yml`) and `reflect-and-improve`
+(the `reflect_log.py` memory helper) are optional enhancements. Neither is
+required for citation checking or the manual memory workflow above.
